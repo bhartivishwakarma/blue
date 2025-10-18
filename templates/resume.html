@@ -1,0 +1,200 @@
+<!-- templates/resume.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Create Your Resume</h1>
+        <p class="page-subtitle">Choose a template and generate your professional resume</p>
+    </div>
+
+    <form method="POST" class="resume-form">
+        <div class="template-selection">
+            <h2 class="section-title">Choose Template</h2>
+            <div class="template-grid">
+                {% for template in templates %}
+                <label class="template-card">
+                    <input type="radio" name="template" value="{{ template.id }}" 
+                           {% if loop.first %}checked{% endif %}>
+                    <div class="template-content">
+                        <div class="template-preview">
+                            <div class="template-demo">
+                                <div class="demo-header"></div>
+                                <div class="demo-content">
+                                    <div class="demo-line short"></div>
+                                    <div class="demo-line medium"></div>
+                                    <div class="demo-line long"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="template-info">
+                            <div class="template-name">{{ template.name }}</div>
+                            <div class="template-description">{{ template.description }}</div>
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="resume-preview">
+            <h2 class="section-title">Preview</h2>
+            <div class="preview-container">
+                <div class="preview-content">
+                    <div class="preview-header">
+                        <h3>{{ user.full_name or 'Your Name' }}</h3>
+                        <p>{{ user.profession or 'Your Profession' }}</p>
+                    </div>
+                    <div class="preview-body">
+                        <div class="preview-section">
+                            <h4>Contact Information</h4>
+                            <p>{{ user.mobile }} | {{ user.email or 'your.email@example.com' }}</p>
+                            <p>{{ user.address or 'Your Address' }}</p>
+                        </div>
+                        <div class="preview-section">
+                            <h4>Professional Summary</h4>
+                            <p>Experienced professional with verified skills and qualifications.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                Generate Resume
+                <i class="fas fa-file-pdf btn-icon"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.template-selection {
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--primary-blue);
+    padding-bottom: 0.5rem;
+}
+
+.template-content {
+    transition: var(--transition);
+}
+
+.template-card input[type="radio"]:checked + .template-content {
+    border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.template-demo {
+    width: 100%;
+    height: 100%;
+    background: var(--white);
+    padding: 1rem;
+}
+
+.demo-header {
+    height: 20px;
+    background: var(--primary-blue);
+    margin-bottom: 1rem;
+    border-radius: 2px;
+}
+
+.demo-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.demo-line {
+    height: 8px;
+    background: var(--gray-light);
+    border-radius: 2px;
+}
+
+.demo-line.short { width: 60%; }
+.demo-line.medium { width: 80%; }
+.demo-line.long { width: 95%; }
+
+.template-card input[type="radio"] {
+    display: none;
+}
+
+.resume-preview {
+    margin-bottom: 3rem;
+}
+
+.preview-container {
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    background: var(--white);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.preview-content {
+    font-family: 'Helvetica', Arial, sans-serif;
+}
+
+.preview-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-blue);
+}
+
+.preview-header h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--black);
+    font-size: 1.5rem;
+}
+
+.preview-header p {
+    margin: 0;
+    color: var(--primary-blue);
+    font-weight: 600;
+}
+
+.preview-section {
+    margin-bottom: 1.5rem;
+}
+
+.preview-section h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--black);
+    font-size: 1.1rem;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.25rem;
+}
+
+.preview-section p {
+    margin: 0;
+    color: var(--gray-dark);
+    line-height: 1.5;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templateCards = document.querySelectorAll('.template-card');
+    
+    templateCards.forEach(card => {
+        card.addEventListener('click', function() {
+            templateCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+        });
+    });
+});
+</script>
+{% endblock %}

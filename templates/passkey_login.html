@@ -1,0 +1,63 @@
+<!-- templates/passkey_login.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Use your passkey to sign in</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label class="form-label">Mobile Number</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-mobile-alt input-icon"></i>
+                    <input type="text" class="form-input" value="{{ mobile }}" readonly>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="passkey" class="form-label">Enter Passkey</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-key input-icon"></i>
+                    <input type="password" id="passkey" name="passkey" class="form-input" 
+                           placeholder="Enter your passkey" required>
+                </div>
+                <small class="form-help">Use your PIN, pattern, or biometric</small>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="remember_device">
+                    <span>Remember this device</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Sign In
+                <i class="fas fa-unlock btn-icon"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer text-center">
+            <p>Forgot passkey? <a href="{{ url_for('login') }}">Use OTP instead</a></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+</style>
+{% endblock %}

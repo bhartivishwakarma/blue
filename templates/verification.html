@@ -1,0 +1,211 @@
+<!-- templates/verification.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Professional Details</h1>
+        <p class="page-subtitle">Tell us about your experience as a {{ profession }}</p>
+    </div>
+
+    <form method="POST" class="verification-form">
+        {% for field in fields %}
+        <div class="form-group">
+            <label for="{{ field.name }}" class="form-label">
+                {{ field.label }}
+                {% if field.required %}*{% endif %}
+            </label>
+            
+            <div class="input-with-voice">
+                {% if field.type == 'text' %}
+                <textarea id="{{ field.name }}" name="{{ field.name }}" 
+                          class="form-input" rows="3"
+                          placeholder="Describe your {{ field.label|lower }}"
+                          {% if field.required %}required{% endif %}></textarea>
+                {% else %}
+                <input type="{{ field.type }}" id="{{ field.name }}" name="{{ field.name }}" 
+                       class="form-input"
+                       placeholder="Enter your {{ field.label|lower }}"
+                       {% if field.required %}required{% endif %}>
+                {% endif %}
+                
+                <input type="hidden" id="{{ field.name }}_voice" name="{{ field.name }}_voice">
+                
+                <button type="button" class="voice-btn" data-field="{{ field.name }}">
+                    <i class="fas fa-microphone"></i>
+                </button>
+            </div>
+            
+            <small class="form-help">
+                <i class="fas fa-lightbulb"></i>
+                Click the microphone to use voice input
+            </small>
+        </div>
+        {% endfor %}
+
+        <div class="ai-assistance">
+            <div class="ai-header">
+                <i class="fas fa-robot ai-icon"></i>
+                <h3>AI Assistance Available</h3>
+            </div>
+            <p>Our AI will help enhance your descriptions to make them more professional and effective for employers.</p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                Save Professional Details
+                <i class="fas fa-check-circle btn-icon"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.input-with-voice {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-with-voice .form-input {
+    flex: 1;
+}
+
+.voice-btn {
+    background: var(--primary-blue);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius);
+    width: 50px;
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.voice-btn:hover {
+    background: var(--blue-dark);
+}
+
+.voice-btn.listening {
+    background: var(--error);
+    animation: pulse 1.5s infinite;
+}
+
+.ai-assistance {
+    background: rgba(0, 123, 255, 0.05);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.ai-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ai-icon {
+    color: var(--primary-blue);
+    font-size: 1.5rem;
+}
+
+.ai-header h3 {
+    margin: 0;
+    color: var(--black);
+}
+
+.ai-assistance p {
+    margin: 0;
+    color: var(--gray);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const voiceButtons = document.querySelectorAll('.voice-btn');
+    
+    voiceButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const fieldName = this.dataset.field;
+            startVoiceInput(fieldName);
+        });
+    });
+    
+    function startVoiceInput(fieldName) {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert('Voice input is not supported in your browser. Please use Chrome or Edge.');
+            return;
+        }
+        
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        const button = document.querySelector(`[data-field="${fieldName}"]`);
+        const textInput = document.getElementById(fieldName);
+        const voiceInput = document.getElementById(`${fieldName}_voice`);
+        
+        recognition.onstart = function() {
+            button.classList.add('listening');
+            button.innerHTML = '<i class="fas fa-stop"></i>';
+        };
+        
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            textInput.value = transcript;
+            voiceInput.value = transcript;
+            
+            // Auto-enhance text via AJAX
+            enhanceText(fieldName, transcript);
+        };
+        
+        recognition.onerror = function() {
+            stopVoiceInput(button);
+        };
+        
+        recognition.onend = function() {
+            stopVoiceInput(button);
+        };
+        
+        recognition.start();
+        
+        // Add stop functionality
+        button.addEventListener('click', function stopListening() {
+            recognition.stop();
+            button.removeEventListener('click', stopListening);
+        });
+    }
+    
+    function stopVoiceInput(button) {
+        button.classList.remove('listening');
+        button.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+    
+    async function enhanceText(fieldName, text) {
+        try {
+            const response = await fetch('/voice-input', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field_name: fieldName,
+                    text: text
+                })
+            });
+            
+            const data = await response.json();
+            if (data.enhanced_text) {
+                document.getElementById(fieldName).value = data.enhanced_text;
+                document.getElementById(`${fieldName}_voice`).value = data.enhanced_text;
+            }
+        } catch (error) {
+            console.error('Error enhancing text:', error);
+        }
+    }
+});
+</script>
+{% endblock %}

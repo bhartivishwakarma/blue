@@ -1,0 +1,90 @@
+/* static/css/responsive.css */
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav {
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .auth-card {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .profession-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .job-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chatbot-wrapper {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .chatbot-window {
+        width: calc(100vw - 2rem);
+        right: -1rem;
+    }
+
+    .flash-messages {
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .profession-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .auth-container {
+        padding: 0.5rem;
+    }
+
+    .nav {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .chatbot-window {
+        height: 400px;
+    }
+}
+
+/* Print styles for resumes */
+@media print {
+    .header,
+    .footer,
+    .chatbot-wrapper,
+    .flash-messages {
+        display: none !important;
+    }
+
+    .main-content {
+        padding: 0;
+        margin: 0;
+    }
+
+    body {
+        background: white;
+    }
+}

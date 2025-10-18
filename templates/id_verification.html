@@ -1,0 +1,199 @@
+<!-- templates/id_verification.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">ID Verification</h1>
+        <p class="page-subtitle">Verify your identity to build trust with employers</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="verification-form">
+        <div class="verification-steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Select ID Type</h3>
+                    <div class="form-group">
+                        <select id="id_type" name="id_type" class="form-input" required>
+                            <option value="">Choose ID Type</option>
+                            <option value="Aadhaar">Aadhaar Card</option>
+                            <option value="PAN">PAN Card</option>
+                            <option value="Driving License">Driving License</option>
+                            <option value="Voter ID">Voter ID</option>
+                            <option value="Passport">Passport</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Enter ID Number</h3>
+                    <div class="form-group">
+                        <input type="text" id="id_number" name="id_number" class="form-input" 
+                               placeholder="Enter your ID number" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Upload ID Document</h3>
+                    <div class="form-group">
+                        <div class="file-upload-area">
+                            <input type="file" id="id_file" name="id_file" 
+                                   accept=".png,.jpg,.jpeg,.pdf" required>
+                            <div class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <p>Click to upload ID document</p>
+                                <small>Supported formats: PNG, JPG, PDF (Max 16MB)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="security-note">
+            <i class="fas fa-shield-alt security-icon"></i>
+            <div>
+                <h4>Your data is secure</h4>
+                <p>We use encryption to protect your personal information. Your ID documents are stored securely and used only for verification purposes.</p>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                Verify Identity
+                <i class="fas fa-check-circle btn-icon"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.verification-steps {
+    max-width: 600px;
+    margin: 0 auto 3rem;
+}
+
+.step {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.step:hover {
+    border-color: var(--primary-blue);
+}
+
+.step-number {
+    background: var(--primary-blue);
+    color: var(--white);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h3 {
+    margin: 0 0 1rem 0;
+    color: var(--black);
+}
+
+.file-upload-area {
+    position: relative;
+    border: 2px dashed #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-blue);
+}
+
+.file-upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+}
+
+.security-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(0, 123, 255, 0.05);
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.security-icon {
+    color: var(--primary-blue);
+    font-size: 1.5rem;
+    margin-top: 0.25rem;
+}
+
+.security-note h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--black);
+}
+
+.security-note p {
+    margin: 0;
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('id_file');
+    const uploadArea = fileInput.parentElement;
+    const placeholder = uploadArea.querySelector('.upload-placeholder');
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const fileName = this.files[0].name;
+            placeholder.innerHTML = `
+                <i class="fas fa-file-alt upload-icon"></i>
+                <p>${fileName}</p>
+                <small>Click to change file</small>
+            `;
+            uploadArea.style.borderColor = 'var(--success)';
+        }
+    });
+});
+</script>
+{% endblock %}

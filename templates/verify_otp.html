@@ -1,0 +1,56 @@
+<!-- templates/verify_otp.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Verify OTP</h1>
+            <p class="auth-subtitle">Enter the 6-digit code sent to your mobile</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="otp" class="form-label">OTP Code</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-shield-alt input-icon"></i>
+                    <input type="text" id="otp" name="otp" class="form-input" 
+                           placeholder="Enter 6-digit OTP" required
+                           pattern="[0-9]{6}" title="Please enter 6-digit OTP"
+                           maxlength="6" autocomplete="one-time-code">
+                </div>
+                <small class="form-help">OTP will auto-fill if detected</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Verify OTP
+                <i class="fas fa-check-circle btn-icon"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer text-center">
+            <p>Didn't receive OTP? <a href="{{ url_for('login') }}">Resend</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const otpInput = document.getElementById('otp');
+    
+    // Auto-fill simulation for demo
+    setTimeout(() => {
+        if (!otpInput.value) {
+            otpInput.value = '123456';
+        }
+    }, 2000);
+    
+    // Auto-submit when 6 digits are entered
+    otpInput.addEventListener('input', function() {
+        if (this.value.length === 6) {
+            this.form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}

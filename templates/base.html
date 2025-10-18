@@ -1,0 +1,80 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Builder for Blue-Collar Professionals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-tools"></i>
+                <span>BlueCollarResume</span>
+            </div>
+            {% if session.user_id %}
+            <nav class="nav">
+                <a href="{{ url_for('language_selection') }}"><i class="fas fa-language"></i> Language</a>
+                <a href="{{ url_for('profession_selection') }}"><i class="fas fa-briefcase"></i> Profession</a>
+                <a href="{{ url_for('resume_generation') }}"><i class="fas fa-file-alt"></i> Resume</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+            {% endif %}
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                            <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2023 BlueCollarResume. Empowering skilled professionals.</p>
+        </footer>
+    </div>
+
+    <!-- AI Chatbot -->
+    <div class="chatbot-wrapper">
+        <div class="chatbot-icon" id="chatbotToggle">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <h4>Resume Assistant</h4>
+                <button class="chatbot-close" id="chatbotClose">×</button>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="chatbot-message bot-message">
+                    Hello! I'm here to help you build your professional resume. How can I assist you?
+                </div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatbotInput" placeholder="Ask me about resume building...">
+                <button id="chatbotSend"><i class="fas fa-paper-plane"></i></button>
+                <button id="chatbotVoice"><i class="fas fa-microphone"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/voice-input.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+</body>
+</html>

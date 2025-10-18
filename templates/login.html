@@ -1,0 +1,47 @@
+<!-- templates/login.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Welcome to BlueCollarResume</h1>
+            <p class="auth-subtitle">Build your professional resume in minutes</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="mobile" class="form-label">Mobile Number</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-mobile-alt input-icon"></i>
+                    <input type="tel" id="mobile" name="mobile" class="form-input" 
+                           placeholder="Enter your 10-digit mobile number" required
+                           pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number"
+                           maxlength="10">
+                </div>
+                <small class="form-help">We'll send an OTP to verify your number</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Send OTP
+                <i class="fas fa-paper-plane btn-icon"></i>
+            </button>
+        </form>
+
+        <div class="auth-features">
+            <div class="feature">
+                <i class="fas fa-robot feature-icon"></i>
+                <span>AI-Powered Resume Builder</span>
+            </div>
+            <div class="feature">
+                <i class="fas fa-microphone feature-icon"></i>
+                <span>Voice Input Support</span>
+            </div>
+            <div class="feature">
+                <i class="fas fa-briefcase feature-icon"></i>
+                <span>Job Recommendations</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

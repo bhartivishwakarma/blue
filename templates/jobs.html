@@ -1,0 +1,251 @@
+<!-- templates/jobs.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Job Recommendations</h1>
+        <p class="page-subtitle">AI-powered job matches based on your profile</p>
+    </div>
+
+    <div class="success-banner">
+        <div class="banner-content">
+            <i class="fas fa-check-circle banner-icon"></i>
+            <div>
+                <h3>Resume Generated Successfully!</h3>
+                <p>Your professional resume is ready. Download it and explore job opportunities below.</p>
+            </div>
+        </div>
+        <div class="banner-actions">
+            <a href="{{ url_for('download_resume') }}" class="btn btn-primary">
+                <i class="fas fa-download btn-icon"></i>
+                Download Resume
+            </a>
+        </div>
+    </div>
+
+    <div class="jobs-section">
+        <h2 class="section-title">Recommended Jobs</h2>
+        
+        {% if jobs %}
+        <div class="job-grid">
+            {% for job in jobs %}
+            <div class="job-card">
+                <div class="job-header">
+                    <div>
+                        <div class="job-title">{{ job.title }}</div>
+                        <div class="job-company">{{ job.company }}</div>
+                        <div class="job-location">{{ job.location }}</div>
+                    </div>
+                    <div class="match-badge">{{ job.match_score }}% Match</div>
+                </div>
+                
+                <div class="job-description">
+                    {{ job.description }}
+                </div>
+                
+                <div class="job-salary">
+                    <i class="fas fa-money-bill-wave salary-icon"></i>
+                    {{ job.salary }}
+                </div>
+                
+                <div class="job-footer">
+                    <div class="job-source">
+                        Source: {{ job.source }}
+                    </div>
+                    <div class="job-actions">
+                        <button class="btn btn-outline">Save</button>
+                        <a href="{{ job.apply_url }}" class="btn btn-primary" target="_blank">
+                            Apply Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-search empty-icon"></i>
+            <h3>No Jobs Found</h3>
+            <p>We couldn't find any job matches for your profile at the moment.</p>
+            <p>Try updating your skills or check back later for new opportunities.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="next-steps">
+        <h2 class="section-title">Next Steps</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <i class="fas fa-share-alt step-icon"></i>
+                <h4>Share Your Resume</h4>
+                <p>Share your resume with potential employers and on job portals</p>
+            </div>
+            <div class="step-card">
+                <i class="fas fa-sync-alt step-icon"></i>
+                <h4>Update Regularly</h4>
+                <p>Keep your resume updated with new skills and experiences</p>
+            </div>
+            <div class="step-card">
+                <i class="fas fa-bell step-icon"></i>
+                <h4>Get Alerts</h4>
+                <p>Set up job alerts for new opportunities matching your profile</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.success-banner {
+    background: linear-gradient(135deg, var(--primary-blue), var(--blue-light));
+    color: var(--white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.banner-icon {
+    font-size: 2.5rem;
+}
+
+.banner-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.banner-content p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.banner-actions {
+    flex-shrink: 0;
+}
+
+.job-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.job-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-outline:hover {
+    background: var(--primary-blue);
+    color: var(--white);
+}
+
+.salary-icon {
+    margin-right: 0.5rem;
+    color: var(--success);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: var(--gray-light);
+}
+
+.empty-state h3 {
+    margin: 0 0 1rem 0;
+    color: var(--gray);
+}
+
+.next-steps {
+    margin-top: 4rem;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.step-card {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.step-card:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+}
+
+.step-icon {
+    font-size: 2.5rem;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+}
+
+.step-card h4 {
+    margin: 0 0 1rem 0;
+    color: var(--black);
+}
+
+.step-card p {
+    margin: 0;
+    color: var(--gray);
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .success-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .job-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .job-actions {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

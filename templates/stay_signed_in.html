@@ -1,0 +1,98 @@
+<!-- templates/stay_signed_in.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Stay Signed In?</h1>
+            <p class="auth-subtitle">Make future logins faster and easier</p>
+        </div>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <div class="option-cards">
+                    <label class="option-card">
+                        <input type="radio" name="stay_signed" value="yes" checked>
+                        <div class="option-content">
+                            <i class="fas fa-fingerprint option-icon"></i>
+                            <div>
+                                <h4>Yes, set up passkey</h4>
+                                <p>Use PIN, pattern, or fingerprint for quick login</p>
+                            </div>
+                        </div>
+                    </label>
+                    
+                    <label class="option-card">
+                        <input type="radio" name="stay_signed" value="no">
+                        <div class="option-content">
+                            <i class="fas fa-mobile-alt option-icon"></i>
+                            <div>
+                                <h4>No, use OTP each time</h4>
+                                <p>Receive SMS OTP for every login</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Continue
+                <i class="fas fa-arrow-right btn-icon"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+.option-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.option-card {
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.option-card:hover {
+    border-color: var(--primary-blue);
+}
+
+.option-card input[type="radio"]:checked + .option-content {
+    border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: var(--transition);
+}
+
+.option-icon {
+    font-size: 2rem;
+    color: var(--primary-blue);
+}
+
+.option-content h4 {
+    margin: 0 0 0.25rem 0;
+    color: var(--black);
+}
+
+.option-content p {
+    margin: 0;
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+.option-card input[type="radio"] {
+    display: none;
+}
+</style>
+{% endblock %}

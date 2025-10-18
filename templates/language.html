@@ -1,0 +1,111 @@
+<!-- templates/language.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Choose Your Language</h1>
+        <p class="page-subtitle">Select your preferred language for the application</p>
+    </div>
+
+    <form method="POST" class="language-form">
+        <div class="language-grid">
+            {% for language in languages %}
+            <label class="language-card">
+                <input type="radio" name="language" value="{{ language.code }}" 
+                       {% if loop.first %}checked{% endif %}>
+                <div class="language-content">
+                    <div class="language-name">{{ language.name }}</div>
+                    <div class="language-code">{{ language.code|upper }}</div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                Continue
+                <i class="fas fa-arrow-right btn-icon"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.page-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: var(--gray);
+    font-size: 1.1rem;
+}
+
+.language-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.language-card {
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.language-card:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+}
+
+.language-card input[type="radio"]:checked + .language-content {
+    border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.language-content {
+    transition: var(--transition);
+}
+
+.language-name {
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 0.25rem;
+}
+
+.language-code {
+    color: var(--gray);
+    font-size: 0.875rem;
+}
+
+.language-card input[type="radio"] {
+    display: none;
+}
+
+.form-actions {
+    text-align: center;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}

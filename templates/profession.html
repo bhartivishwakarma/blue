@@ -1,0 +1,72 @@
+<!-- templates/profession.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Select Your Profession</h1>
+        <p class="page-subtitle">Choose the trade that best matches your skills and experience</p>
+    </div>
+
+    <form method="POST">
+        <div class="profession-grid">
+            {% for profession in professions %}
+            <label class="profession-card">
+                <input type="radio" name="profession" value="{{ profession.name }}" required>
+                <div class="profession-content">
+                    <i class="{{ profession.icon_class }} profession-icon"></i>
+                    <div class="profession-name">{{ profession.name }}</div>
+                    <div class="profession-description">{{ profession.description }}</div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                Continue
+                <i class="fas fa-arrow-right btn-icon"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.profession-content {
+    transition: var(--transition);
+}
+
+.profession-card input[type="radio"]:checked + .profession-content {
+    border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.profession-description {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 0.5rem;
+    line-height: 1.3;
+}
+
+.profession-card input[type="radio"] {
+    display: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const professionCards = document.querySelectorAll('.profession-card');
+    
+    professionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            professionCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+        });
+    });
+});
+</script>
+{% endblock %}
