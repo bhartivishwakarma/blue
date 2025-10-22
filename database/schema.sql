@@ -1,85 +1,73 @@
 -- database/schema.sql
-CREATE DATABASE IF NOT EXISTS bluecollar_resume;
-USE bluecollar_resume;
 
+-- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     mobile VARCHAR(15) UNIQUE NOT NULL,
     full_name VARCHAR(100),
-    address TEXT,
     email VARCHAR(100),
-    gender ENUM('Male', 'Female', 'Other', 'Prefer not to say'),
-    profession VARCHAR(50),
-    id_type VARCHAR(50),
-    id_number VARCHAR(100),
-    id_verified BOOLEAN DEFAULT FALSE,
-    id_file_path VARCHAR(255),
+    gender VARCHAR(20),
+    address TEXT,
+    profession VARCHAR(100),
     verification_data JSON,
-    has_passkey BOOLEAN DEFAULT FALSE,
-    passkey_data TEXT,
+    id_verified BOOLEAN DEFAULT FALSE,
+    id_data JSON,
+    resume_path VARCHAR(255),
     language VARCHAR(10) DEFAULT 'en',
+    passkey_hash VARCHAR(255),
+    remember_device BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_mobile (mobile),
-    INDEX idx_profession (profession)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS resumes (
+-- Job tracking table
+CREATE TABLE IF NOT EXISTS job_tracking (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    template VARCHAR(50),
-    file_path VARCHAR(255),
+    user_mobile VARCHAR(15) NOT NULL,
+    job_id VARCHAR(50) NOT NULL,
+    action ENUM('viewed', 'saved', 'applied') NOT NULL,
+    job_data JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id)
+    FOREIGN KEY (user_mobile) REFERENCES users(mobile) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS job_recommendations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    job_title VARCHAR(100),
-    company VARCHAR(100),
-    location VARCHAR(100),
-    description TEXT,
-    salary_range VARCHAR(100),
-    match_score INT,
-    source VARCHAR(50),
-    apply_url VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id)
-);
-
+-- User sessions table
 CREATE TABLE IF NOT EXISTS user_sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    session_token VARCHAR(255) UNIQUE,
-    expires_at TIMESTAMP,
+    user_mobile VARCHAR(15) NOT NULL,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_token (session_token),
-    INDEX idx_user_id (user_id)
+    FOREIGN KEY (user_mobile) REFERENCES users(mobile) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS professions (
+-- OTP verification table
+CREATE TABLE IF NOT EXISTS otp_verifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL,
-    icon_class VARCHAR(50),
-    description TEXT,
+    mobile VARCHAR(15) NOT NULL,
+    otp_code VARCHAR(6) NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert sample professions
-INSERT IGNORE INTO professions (name, icon_class, description) VALUES
-('Electrician', 'fas fa-bolt', 'Electrical installation and repair specialist'),
-('Plumber', 'fas fa-faucet', 'Pipe fitting and water systems expert'),
-('Carpenter', 'fas fa-hammer', 'Woodworking and construction professional'),
-('Driver', 'fas fa-truck', 'Commercial and personal vehicle operator'),
-('Welder', 'fas fa-fire', 'Metal joining and fabrication specialist'),
-('Mechanic', 'fas fa-tools', 'Vehicle repair and maintenance expert'),
-('Construction Worker', 'fas fa-hard-hat', 'General construction laborer'),
-('Painter', 'fas fa-paint-roller', 'Surface coating and finishing professional'),
-('Mason', 'fas fa-border-style', 'Brick and stone work specialist'),
-('Gardener', 'fas fa-leaf', 'Landscaping and plant care expert'),
-('Security Guard', 'fas fa-shield-alt', 'Safety and security personnel'),
-('Cleaner', 'fas fa-broom', 'Sanitation and cleaning professional');
+create table if not exists professions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    icon_class VARCHAR(100)
+);
+-- Insert sample professions data (optional)
+INSERT IGNORE INTO professions (name, description, icon_class) VALUES
+('Driver', 'Professional driving services', 'fas fa-truck'),
+('Electrician', 'Electrical installation and repair', 'fas fa-bolt'),
+('Plumber', 'Plumbing and pipe fitting services', 'fas fa-faucet'),
+('Carpenter', 'Woodworking and furniture making', 'fas fa-hammer'),
+('Mechanic', 'Vehicle repair and maintenance', 'fas fa-tools'),
+('Welder', 'Metal welding and fabrication', 'fas fa-fire'),
+('Construction Worker', 'Construction and labor services', 'fas fa-hard-hat'),
+('Painter', 'Painting and surface coating', 'fas fa-paint-roller'),
+('Mason', 'Brick and stone work', 'fas fa-ruler-combined'),
+('Gardener', 'Gardening and landscaping', 'fas fa-seedling'),
+('Security Guard', 'Security and protection services', 'fas fa-shield-alt'),
+('Cleaner', 'Cleaning and sanitation services', 'fas fa-broom');

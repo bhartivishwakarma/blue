@@ -7,57 +7,330 @@
         <div class="auth-header">
             <h1 class="auth-title">Welcome Back</h1>
             <p class="auth-subtitle">Use your passkey to sign in</p>
+            <div class="mobile-display">
+                <i class="fas fa-mobile-alt"></i>
+                <span>{{ mobile }}</span>
+            </div>
         </div>
 
-        <form method="POST" class="auth-form">
-            <div class="form-group">
-                <label class="form-label">Mobile Number</label>
-                <div class="input-with-icon">
-                    <i class="fas fa-mobile-alt input-icon"></i>
-                    <input type="text" class="form-input" value="{{ mobile }}" readonly>
-                </div>
-            </div>
-
+        <form method="POST" class="auth-form" id="passkeyForm">
             <div class="form-group">
                 <label for="passkey" class="form-label">Enter Passkey</label>
                 <div class="input-with-icon">
                     <i class="fas fa-key input-icon"></i>
                     <input type="password" id="passkey" name="passkey" class="form-input" 
-                           placeholder="Enter your passkey" required>
+                           placeholder="Enter your passkey" required
+                           pattern=".{4,}" title="Passkey must be at least 4 characters">
                 </div>
                 <small class="form-help">Use your PIN, pattern, or biometric</small>
             </div>
 
             <div class="form-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" name="remember_device">
-                    <span>Remember this device</span>
+                    <input type="checkbox" name="remember_device" id="rememberDevice">
+                    <span class="checkmark"></span>
+                    <span class="checkbox-text">Remember this device for 30 days</span>
                 </label>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-full">
+            <button type="submit" class="btn btn-primary btn-full" id="signinBtn">
                 Sign In
                 <i class="fas fa-unlock btn-icon"></i>
             </button>
         </form>
 
-        <div class="auth-footer text-center">
-            <p>Forgot passkey? <a href="{{ url_for('login') }}">Use OTP instead</a></p>
+        <div class="alternative-options">
+            <div class="divider">
+                <span>or</span>
+            </div>
+            
+            <div class="alternative-buttons">
+                <button type="button" class="btn btn-outline btn-full" id="useBiometric">
+                    <i class="fas fa-fingerprint"></i>
+                    Use Biometric
+                </button>
+                
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-full">
+                    <i class="fas fa-sms"></i>
+                    Use OTP Instead
+                </a>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            <div class="help-links">
+                <a href="#" id="forgotPasskey">
+                    <i class="fas fa-question-circle"></i>
+                    Forgot Passkey?
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
+.mobile-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: var(--border-radius);
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     cursor: pointer;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.checkbox-label:hover {
+    border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.02);
 }
 
 .checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    position: relative;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.checkbox-text {
+    color: var(--gray-dark);
+    font-weight: 500;
+}
+
+.alternative-options {
+    margin: 2rem 0;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--gray);
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.divider span {
+    padding: 0 1rem;
+    font-size: 0.9rem;
+}
+
+.alternative-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-outline:hover {
+    background: var(--primary-blue);
+    color: var(--white);
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.help-links {
+    text-align: center;
+}
+
+.help-links a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.help-links a:hover {
+    text-decoration: underline;
+}
+
+.biometric-fallback {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid var(--warning);
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.biometric-fallback p {
+    margin: 0 0 0.5rem 0;
+    color: var(--gray-dark);
+    font-size: 0.9rem;
+}
+
+.demo-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 123, 255, 0.05);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.demo-note p {
+    margin: 0;
+    color: var(--gray);
+    font-size: 0.9rem;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passkeyForm = document.getElementById('passkeyForm');
+    const passkeyInput = document.getElementById('passkey');
+    const signinBtn = document.getElementById('signinBtn');
+    const useBiometricBtn = document.getElementById('useBiometric');
+    const forgotPasskeyLink = document.getElementById('forgotPasskey');
+    const rememberDevice = document.getElementById('rememberDevice');
+
+    // Check if biometric authentication is available
+    if (window.PublicKeyCredential) {
+        useBiometricBtn.style.display = 'flex';
+    } else {
+        useBiometricBtn.style.display = 'none';
+    }
+
+    // Biometric authentication simulation
+    useBiometricBtn.addEventListener('click', function() {
+        signinBtn.innerHTML = '<i class="fas fa-fingerprint fa-spin"></i> Authenticating...';
+        signinBtn.disabled = true;
+        
+        // Simulate biometric authentication
+        setTimeout(() => {
+            // Auto-fill passkey for demo
+            passkeyInput.value = '1234';
+            
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast('Biometric authentication successful!', 'success');
+            }
+            
+            // Auto-submit after successful authentication
+            setTimeout(() => {
+                passkeyForm.submit();
+            }, 1000);
+        }, 2000);
+    });
+
+    // Forgot passkey functionality
+    forgotPasskeyLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        if (confirm('Reset passkey? You will need to verify your identity again.')) {
+            // Redirect to OTP verification
+            window.location.href = "{{ url_for('login') }}";
+        }
+    });
+
+    // Form submission
+    passkeyForm.addEventListener('submit', function(e) {
+        const passkey = passkeyInput.value.trim();
+        
+        if (passkey.length < 4) {
+            e.preventDefault();
+            showError('Passkey must be at least 4 characters');
+            return;
+        }
+
+        signinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+        signinBtn.disabled = true;
+        
+        // Demo success message
+        if (window.blueCollarApp) {
+            const method = rememberDevice.checked ? 'with device remember' : '';
+            window.blueCollarApp.showToast(`Signing in ${method}...`, 'info');
+        }
+    });
+
+    // Auto-fill for demo
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setTimeout(() => {
+            if (!passkeyInput.value) {
+                passkeyInput.value = '1234';
+                if (window.blueCollarApp) {
+                    window.blueCollarApp.showToast('Demo passkey filled for testing', 'info');
+                }
+            }
+        }, 1000);
+    }
+
+    function showError(message) {
+        if (window.blueCollarApp && window.blueCollarApp.showToast) {
+            window.blueCollarApp.showToast(message, 'error');
+        } else {
+            alert(message);
+        }
+        
+        passkeyInput.style.borderColor = 'var(--error)';
+        setTimeout(() => {
+            passkeyInput.style.borderColor = '';
+        }, 3000);
+    }
+
+    // Add demo note for testing
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const demoNote = document.createElement('div');
+        demoNote.className = 'demo-note';
+        demoNote.innerHTML = '<p><strong>Demo:</strong> Use any 4+ character passkey. "1234" is pre-filled.</p>';
+        passkeyForm.appendChild(demoNote);
+    }
+});
+</script>
 {% endblock %}

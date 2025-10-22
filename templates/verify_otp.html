@@ -7,49 +7,274 @@
         <div class="auth-header">
             <h1 class="auth-title">Verify OTP</h1>
             <p class="auth-subtitle">Enter the 6-digit code sent to your mobile</p>
+            <div class="mobile-display">
+                <i class="fas fa-mobile-alt"></i>
+                <span>******{{ session.mobile[-4:] if session.mobile else '3210' }}</span>
+            </div>
         </div>
 
-        <form method="POST" class="auth-form">
+        <form method="POST" class="auth-form" id="otpForm">
             <div class="form-group">
                 <label for="otp" class="form-label">OTP Code</label>
                 <div class="input-with-icon">
                     <i class="fas fa-shield-alt input-icon"></i>
-                    <input type="text" id="otp" name="otp" class="form-input" 
+                    <input type="text" id="otp" name="otp" class="form-input otp-input" 
                            placeholder="Enter 6-digit OTP" required
                            pattern="[0-9]{6}" title="Please enter 6-digit OTP"
-                           maxlength="6" autocomplete="one-time-code">
+                           maxlength="6" autocomplete="one-time-code"
+                           inputmode="numeric">
                 </div>
-                <small class="form-help">OTP will auto-fill if detected</small>
+                <div class="otp-help">
+                    <small class="form-help">Enter the 6-digit code sent to your mobile</small>
+                    <div class="otp-timer" id="otpTimer">
+                        <i class="fas fa-clock"></i>
+                        <span id="timer">10:00</span>
+                    </div>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-full">
+            <button type="submit" class="btn btn-primary btn-full" id="verifyBtn">
                 Verify OTP
                 <i class="fas fa-check-circle btn-icon"></i>
             </button>
+
+            <div class="resend-otp">
+                <p>Didn't receive the code? <a href="#" id="resendLink">Resend OTP</a></p>
+            </div>
         </form>
 
-        <div class="auth-footer text-center">
-            <p>Didn't receive OTP? <a href="{{ url_for('login') }}">Resend</a></p>
+        <div class="demo-note">
+            <div class="demo-header">
+                <i class="fas fa-info-circle"></i>
+                <span>Demo Information</span>
+            </div>
+            <p>For demo purposes, use OTP: <strong>123456</strong></p>
+            <small>The OTP will auto-fill in 3 seconds for testing.</small>
         </div>
     </div>
 </div>
 
+<style>
+.mobile-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: var(--border-radius);
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
+.otp-input {
+    text-align: center;
+    font-size: 1.2rem;
+    letter-spacing: 0.5rem;
+    font-weight: 600;
+}
+
+.otp-help {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.otp-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--error);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.otp-timer.expired {
+    color: var(--error);
+}
+
+.otp-timer.running {
+    color: var(--warning);
+}
+
+.resend-otp {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.resend-otp p {
+    margin: 0;
+    color: var(--gray);
+}
+
+.resend-otp a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.resend-otp a:hover:not(.disabled) {
+    text-decoration: underline;
+}
+
+.resend-otp a.disabled {
+    color: var(--gray);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.demo-note {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid var(--warning);
+    border-radius: var(--border-radius);
+}
+
+.demo-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.demo-note p {
+    margin: 0.5rem 0;
+    color: var(--gray-dark);
+}
+
+.demo-note small {
+    color: var(--gray);
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const otpInput = document.getElementById('otp');
+    const otpForm = document.getElementById('otpForm');
+    const timerElement = document.getElementById('timer');
+    const resendLink = document.getElementById('resendLink');
+    const verifyBtn = document.getElementById('verifyBtn');
     
-    // Auto-fill simulation for demo
+    let timeLeft = 600; // 10 minutes in seconds
+    let timerInterval;
+    let canResend = false;
+
+    // Start the timer
+    startTimer();
+
+    // Auto-fill and auto-submit for demo
     setTimeout(() => {
         if (!otpInput.value) {
             otpInput.value = '123456';
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast('Demo OTP auto-filled', 'info');
+            }
         }
-    }, 2000);
-    
-    // Auto-submit when 6 digits are entered
+    }, 3000);
+
+    // Auto-submit when OTP is complete
     otpInput.addEventListener('input', function() {
         if (this.value.length === 6) {
-            this.form.submit();
+            verifyBtn.click();
         }
+    });
+
+    // Manual submission
+    otpForm.addEventListener('submit', function(e) {
+        const otp = otpInput.value.trim();
+        
+        if (otp.length !== 6) {
+            e.preventDefault();
+            showError('Please enter a valid 6-digit OTP');
+            return;
+        }
+
+        if (!/^\d{6}$/.test(otp)) {
+            e.preventDefault();
+            showError('OTP must contain only numbers');
+            return;
+        }
+
+        verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+        verifyBtn.disabled = true;
+    });
+
+    // Resend OTP functionality
+    resendLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        if (!canResend) {
+            showError('Please wait before requesting a new OTP');
+            return;
+        }
+
+        if (confirm('Send new OTP to your mobile?')) {
+            // In a real app, this would make an API call to resend OTP
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast('New OTP sent to your mobile', 'success');
+            }
+            
+            // Reset timer
+            timeLeft = 600;
+            startTimer();
+            canResend = false;
+            resendLink.classList.add('disabled');
+        }
+    });
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        updateTimerDisplay();
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                canResend = true;
+                resendLink.classList.remove('disabled');
+                document.getElementById('otpTimer').classList.add('expired');
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        const timerElementClass = document.getElementById('otpTimer');
+        timerElementClass.classList.remove('expired', 'running');
+        
+        if (timeLeft < 60) {
+            timerElementClass.classList.add('expired');
+        } else if (timeLeft < 300) {
+            timerElementClass.classList.add('running');
+        }
+    }
+
+    function showError(message) {
+        if (window.blueCollarApp && window.blueCollarApp.showToast) {
+            window.blueCollarApp.showToast(message, 'error');
+        } else {
+            alert(message);
+        }
+        
+        otpInput.style.borderColor = 'var(--error)';
+        setTimeout(() => {
+            otpInput.style.borderColor = '';
+        }, 3000);
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        clearInterval(timerInterval);
     });
 });
 </script>

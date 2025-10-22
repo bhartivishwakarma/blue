@@ -2,6 +2,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% set user = user if (user is defined and user) else {'full_name':'','email':'','gender':'','address':''} %}
+
 <div class="page-container">
     <div class="page-header">
         <h1 class="page-title">Complete Your Profile</h1>
@@ -12,16 +14,30 @@
         <div class="form-grid">
             <div class="form-group">
                 <label for="full_name" class="form-label">Full Name *</label>
-                <input type="text" id="full_name" name="full_name" class="form-input" 
-                       value="{{ user.full_name if user.full_name }}" 
-                       placeholder="Enter your full name" required>
+                <div class="input-with-voice">
+                    <input type="text" id="full_name" name="full_name" class="form-input" 
+                           value="{{ user.full_name if user.full_name }}" 
+                           placeholder="Enter your full name" required>
+                    <input type="hidden" id="full_name_voice" name="full_name_voice">
+                    <button type="button" class="voice-btn" data-field="full_name">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+                <small class="form-help">
+                    <i class="fas fa-lightbulb"></i>
+                    Use voice input for faster entry
+                </small>
             </div>
 
             <div class="form-group">
                 <label for="email" class="form-label">Email Address</label>
-                <input type="email" id="email" name="email" class="form-input" 
-                       value="{{ user.email if user.email }}" 
-                       placeholder="your.email@example.com">
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" name="email" class="form-input" 
+                           value="{{ user.email if user.email }}" 
+                           placeholder="your.email@example.com">
+                </div>
+                <small class="form-help">For job alerts and communication</small>
             </div>
 
             <div class="form-group">
@@ -37,8 +53,44 @@
 
             <div class="form-group full-width">
                 <label for="address" class="form-label">Address</label>
-                <textarea id="address" name="address" class="form-input" rows="3" 
-                          placeholder="Enter your complete address">{{ user.address if user.address }}</textarea>
+                <div class="input-with-voice">
+                    <textarea id="address" name="address" class="form-input" rows="3" 
+                              placeholder="Enter your complete address with city and state">{{ user.address if user.address }}</textarea>
+                    <input type="hidden" id="address_voice" name="address_voice">
+                    <button type="button" class="voice-btn" data-field="address">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+                <small class="form-help">Include city, state, and PIN code for better job matches</small>
+            </div>
+        </div>
+
+        <div class="profile-preview">
+            <h3 class="preview-title">Profile Preview</h3>
+            <div class="preview-card">
+                <div class="preview-header">
+                    <div class="preview-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="preview-info">
+                        <div class="preview-name" id="previewName">Your Name</div>
+                        <div class="preview-profession" id="previewProfession">{{ session.profession if session.profession else 'Professional' }}</div>
+                    </div>
+                </div>
+                <div class="preview-details">
+                    <div class="preview-item">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span id="previewMobile">{{ session.mobile if session.mobile else 'Mobile Number' }}</span>
+                    </div>
+                    <div class="preview-item">
+                        <i class="fas fa-envelope"></i>
+                        <span id="previewEmail">your.email@example.com</span>
+                    </div>
+                    <div class="preview-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="previewAddress">Your address will appear here</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -53,7 +105,7 @@
 
 <style>
 .profile-form {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
 }
 
@@ -61,17 +113,218 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
 }
 
 .full-width {
     grid-column: 1 / -1;
 }
 
+.profile-preview {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: var(--gray-light);
+    border-radius: var(--border-radius);
+}
+
+.preview-title {
+    margin: 0 0 1.5rem 0;
+    color: var(--black);
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.preview-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.preview-avatar {
+    width: 60px;
+    height: 60px;
+    background: var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.5rem;
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.25rem;
+}
+
+.preview-profession {
+    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.preview-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.preview-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--gray-dark);
+}
+
+.preview-item i {
+    color: var(--primary-blue);
+    width: 16px;
+}
+
 @media (max-width: 768px) {
     .form-grid {
         grid-template-columns: 1fr;
     }
+    
+    .preview-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .profile-preview {
+        padding: 1.5rem;
+    }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fullNameInput = document.getElementById('full_name');
+    const emailInput = document.getElementById('email');
+    const addressInput = document.getElementById('address');
+    
+    const previewName = document.getElementById('previewName');
+    const previewEmail = document.getElementById('previewEmail');
+    const previewAddress = document.getElementById('previewAddress');
+    const previewProfession = document.getElementById('previewProfession');
+    const previewMobile = document.getElementById('previewMobile');
+    
+    // Update preview in real-time
+    function updatePreview() {
+        previewName.textContent = fullNameInput.value || 'Your Name';
+        previewEmail.textContent = emailInput.value || 'your.email@example.com';
+        previewAddress.textContent = addressInput.value || 'Your address will appear here';
+        
+        // Update profession from session
+        const profession = '{{ session.profession if session.profession else "Professional" }}';
+        previewProfession.textContent = profession;
+        
+        // Update mobile from session
+        const mobile = '{{ session.mobile if session.mobile else "Mobile Number" }}';
+        previewMobile.textContent = mobile;
+    }
+    
+    // Add event listeners for real-time updates
+    fullNameInput.addEventListener('input', updatePreview);
+    emailInput.addEventListener('input', updatePreview);
+    addressInput.addEventListener('input', updatePreview);
+    
+    // Initialize voice buttons
+    const voiceButtons = document.querySelectorAll('.voice-btn');
+    voiceButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const fieldName = this.dataset.field;
+            startVoiceInput(fieldName, this);
+        });
+    });
+    
+    function startVoiceInput(fieldName, button) {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('Voice input is not supported in your browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-IN';
+        
+        const textInput = document.getElementById(fieldName);
+        const voiceInput = document.getElementById(`${fieldName}_voice`);
+        
+        recognition.onstart = function() {
+            button.classList.add('listening');
+            button.innerHTML = '<i class="fas fa-stop"></i>';
+        };
+        
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            if (textInput) {
+                textInput.value = transcript;
+                if (voiceInput) {
+                    voiceInput.value = transcript;
+                }
+                updatePreview();
+            }
+        };
+        
+        recognition.onerror = function() {
+            stopVoiceInput(button);
+        };
+        
+        recognition.onend = function() {
+            stopVoiceInput(button);
+        };
+        
+        recognition.start();
+        
+        button.addEventListener('click', function stopListening() {
+            recognition.stop();
+        });
+    }
+    
+    function stopVoiceInput(button) {
+        button.classList.remove('listening');
+        button.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+    
+    // Initialize preview
+    updatePreview();
+    
+    // Auto-fill demo data for testing
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setTimeout(() => {
+            if (!fullNameInput.value) {
+                fullNameInput.value = 'Rajesh Kumar';
+                emailInput.value = 'rajesh.kumar@example.com';
+                addressInput.value = '123 Main Street, Mumbai, Maharashtra - 400001';
+                updatePreview();
+                
+                if (window.blueCollarApp) {
+                    window.blueCollarApp.showToast('Demo data filled for testing', 'info');
+                }
+            }
+        }, 1000);
+    }
+});
+</script>
 {% endblock %}

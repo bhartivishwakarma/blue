@@ -1,34 +1,33 @@
 # config.py
 import os
-from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Config:
-    DB_CONFIG = {
-        
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'Demo@100',
-        'database': 'bluecollar_resume',
-        'auth_plugin': 'mysql_native_password'
-    }
+    # Flask Configuration
+    SECRET_KEY = os.getenv('SECRET_KEY', 'bluecollar-resume-secret-key-2024')
     
-    MYSQL_HOST = DB_CONFIG['host']
-    MYSQL_USER = DB_CONFIG['user']              
-    MYSQL_PASSWORD = DB_CONFIG['password']
-    MYSQL_DATABASE = DB_CONFIG['database']  
-
-    # Session configuration
-    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    # Database Configuration
+    MYSQL_HOST = 'localhost'
+    MYSQL_USER = 'root'
+    MYSQL_PASSWORD = 'Demo@100'
+    MYSQL_DATABASE = 'bluecollar'
     
-    # File upload configuration
+    # File Upload Configuration
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    UPLOAD_FOLDER = 'instance/resumes'
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
     
-    # AI Configuration
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+    # API Keys
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyAJf5-sD10EHmxKqlEtwApTHu_E5wSZDHE')
+    TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
+    TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
+    TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '')
     
-    # SMS Service Configuration
-    TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
-    TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
-    TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '')
+    # Application Settings
+    DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+    PORT = int(os.getenv('PORT', 5000))
+    
+    # Session Settings
+    PERMANENT_SESSION_LIFETIME = 30 * 24 * 60 * 60  # 30 days

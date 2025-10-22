@@ -18,18 +18,36 @@
                            {% if loop.first %}checked{% endif %}>
                     <div class="template-content">
                         <div class="template-preview">
-                            <div class="template-demo">
+                            <div class="template-demo template-{{ template.id }}">
                                 <div class="demo-header"></div>
                                 <div class="demo-content">
                                     <div class="demo-line short"></div>
                                     <div class="demo-line medium"></div>
                                     <div class="demo-line long"></div>
+                                    <div class="demo-section"></div>
+                                    <div class="demo-line medium"></div>
+                                    <div class="demo-line short"></div>
                                 </div>
                             </div>
                         </div>
                         <div class="template-info">
                             <div class="template-name">{{ template.name }}</div>
                             <div class="template-description">{{ template.description }}</div>
+                            <div class="template-features">
+                                {% if template.id == 'modern' %}
+                                <span class="feature-tag">Professional</span>
+                                <span class="feature-tag">Clean</span>
+                                {% elif template.id == 'classic' %}
+                                <span class="feature-tag">Traditional</span>
+                                <span class="feature-tag">Formal</span>
+                                {% elif template.id == 'compact' %}
+                                <span class="feature-tag">One Page</span>
+                                <span class="feature-tag">Concise</span>
+                                {% elif template.id == 'executive' %}
+                                <span class="feature-tag">Executive</span>
+                                <span class="feature-tag">Detailed</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </label>
@@ -38,38 +56,103 @@
         </div>
 
         <div class="resume-preview">
-            <h2 class="section-title">Preview</h2>
+            <h2 class="section-title">Live Preview</h2>
             <div class="preview-container">
-                <div class="preview-content">
+                <div class="preview-content" id="resumePreview">
                     <div class="preview-header">
-                        <h3>{{ user.full_name or 'Your Name' }}</h3>
-                        <p>{{ user.profession or 'Your Profession' }}</p>
+                        <h3 id="previewName">{{ session.full_name or 'Your Name' }}</h3>
+                        <p id="previewProfession">{{ session.profession or 'Your Profession' }}</p>
                     </div>
                     <div class="preview-body">
                         <div class="preview-section">
                             <h4>Contact Information</h4>
-                            <p>{{ user.mobile }} | {{ user.email or 'your.email@example.com' }}</p>
-                            <p>{{ user.address or 'Your Address' }}</p>
+                            <p>
+                                <span id="previewMobile">{{ session.mobile or 'Your Mobile' }}</span>
+                                {% if session.email %} | <span id="previewEmail">{{ session.email }}</span>{% endif %}
+                            </p>
+                            {% if session.address %}
+                            <p id="previewAddress">{{ session.address }}</p>
+                            {% endif %}
                         </div>
+                        
                         <div class="preview-section">
                             <h4>Professional Summary</h4>
-                            <p>Experienced professional with verified skills and qualifications.</p>
+                            <p id="previewSummary">
+                                {% if session.verification_data %}
+                                    Experienced {{ session.profession or 'professional' }} 
+                                    {% if session.verification_data.experience_years %}
+                                        with {{ session.verification_data.experience_years }} years of experience
+                                    {% endif %}
+                                    {% if session.verification_data.specialization %}
+                                        specializing in {{ session.verification_data.specialization }}
+                                    {% endif %}
+                                    . Verified professional with proven track record.
+                                {% else %}
+                                    Professional {{ session.profession or 'worker' }} with verified credentials and professional background.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        {% if session.verification_data %}
+                        <div class="preview-section">
+                            <h4>Professional Details</h4>
+                            <div class="preview-details-grid">
+                                {% for key, value in session.verification_data.items() %}
+                                {% if value and key != 'experience_years' %}
+                                <div class="detail-item">
+                                    <strong>{{ key.replace('_', ' ').title() }}:</strong>
+                                    <span>{{ value }}</span>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="preview-section">
+                            <h4>Verification Status</h4>
+                            <div class="verification-badges">
+                                <span class="verification-badge verified">
+                                    <i class="fas fa-check-circle"></i>
+                                    Identity Verified
+                                </span>
+                                <span class="verification-badge verified">
+                                    <i class="fas fa-check-circle"></i>
+                                    Professional Verified
+                                </span>
+                                <span class="verification-badge verified">
+                                    <i class="fas fa-check-circle"></i>
+                                    Mobile Verified
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-large">
-                Generate Resume
-                <i class="fas fa-file-pdf btn-icon"></i>
-            </button>
+        <div class="resume-actions">
+            <div class="action-info">
+                <i class="fas fa-info-circle"></i>
+                <p>Your resume will be generated in English for professional use</p>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-file-pdf btn-icon"></i>
+                    Generate Resume PDF
+                </button>
+            </div>
         </div>
     </form>
 </div>
 
 <style>
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 .template-selection {
     margin-bottom: 3rem;
 }
@@ -83,28 +166,81 @@
     padding-bottom: 0.5rem;
 }
 
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.template-card {
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--white);
+}
+
+.template-card:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.15);
+}
+
+.template-card.selected {
+    border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.02);
+}
+
 .template-content {
     transition: var(--transition);
 }
 
-.template-card input[type="radio"]:checked + .template-content {
-    border-color: var(--primary-blue);
-    background: rgba(0, 123, 255, 0.05);
-    transform: translateY(-2px);
+.template-preview {
+    height: 200px;
+    background: var(--gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .template-demo {
-    width: 100%;
-    height: 100%;
+    width: 80%;
+    height: 80%;
     background: var(--white);
+    border-radius: 4px;
     padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.demo-header {
+.template-modern .demo-header {
     height: 20px;
     background: var(--primary-blue);
     margin-bottom: 1rem;
     border-radius: 2px;
+}
+
+.template-classic .demo-header {
+    height: 25px;
+    background: var(--gray-dark);
+    margin-bottom: 1rem;
+    border-radius: 2px;
+}
+
+.template-compact .demo-header {
+    height: 15px;
+    background: var(--success);
+    margin-bottom: 0.5rem;
+    border-radius: 1px;
+}
+
+.template-executive .demo-header {
+    height: 30px;
+    background: linear-gradient(135deg, var(--primary-blue), var(--blue-dark));
+    margin-bottom: 1rem;
+    border-radius: 3px;
 }
 
 .demo-content {
@@ -123,6 +259,47 @@
 .demo-line.medium { width: 80%; }
 .demo-line.long { width: 95%; }
 
+.demo-section {
+    height: 12px;
+    background: var(--primary-blue);
+    margin: 0.5rem 0;
+    border-radius: 2px;
+    width: 40%;
+}
+
+.template-info {
+    padding: 1.5rem;
+}
+
+.template-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+}
+
+.template-description {
+    color: var(--gray);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.template-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.feature-tag {
+    background: rgba(0, 123, 255, 0.1);
+    color: var(--primary-blue);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
 .template-card input[type="radio"] {
     display: none;
 }
@@ -138,10 +315,12 @@
     background: var(--white);
     max-width: 800px;
     margin: 0 auto;
+    box-shadow: var(--box-shadow);
 }
 
 .preview-content {
     font-family: 'Helvetica', Arial, sans-serif;
+    line-height: 1.4;
 }
 
 .preview-header {
@@ -154,13 +333,15 @@
 .preview-header h3 {
     margin: 0 0 0.5rem 0;
     color: var(--black);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: 700;
 }
 
 .preview-header p {
     margin: 0;
     color: var(--primary-blue);
     font-weight: 600;
+    font-size: 1.1rem;
 }
 
 .preview-section {
@@ -180,11 +361,106 @@
     color: var(--gray-dark);
     line-height: 1.5;
 }
+
+.preview-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.detail-item strong {
+    color: var(--black);
+}
+
+.detail-item span {
+    color: var(--gray-dark);
+}
+
+.verification-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.verification-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.verification-badge.verified {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.resume-actions {
+    text-align: center;
+    padding: 2rem;
+    background: var(--gray-light);
+    border-radius: var(--border-radius);
+    margin-top: 2rem;
+}
+
+.action-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--gray);
+}
+
+.action-info i {
+    color: var(--primary-blue);
+}
+
+.action-info p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.btn-large {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .preview-container {
+        padding: 1.5rem;
+    }
+    
+    .preview-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .verification-badges {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const templateCards = document.querySelectorAll('.template-card');
+    const resumePreview = document.getElementById('resumePreview');
     
     templateCards.forEach(card => {
         card.addEventListener('click', function() {
@@ -193,7 +469,56 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const radio = this.querySelector('input[type="radio"]');
             radio.checked = true;
+            
+            // Update preview based on template
+            updatePreview(radio.value);
+            
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast(`${radio.value} template selected`, 'success');
+            }
         });
+    });
+    
+    function updatePreview(template) {
+        // Remove existing template classes
+        resumePreview.className = 'preview-content';
+        
+        // Add template-specific styling
+        switch(template) {
+            case 'modern':
+                resumePreview.style.fontFamily = "'Helvetica', Arial, sans-serif";
+                break;
+            case 'classic':
+                resumePreview.style.fontFamily = "'Times New Roman', serif";
+                break;
+            case 'compact':
+                resumePreview.style.fontSize = '0.9em';
+                break;
+            case 'executive':
+                resumePreview.style.fontFamily = "'Georgia', serif";
+                break;
+        }
+        
+        // Update preview content based on session data
+        updatePreviewContent();
+    }
+    
+    function updatePreviewContent() {
+        // This function would update the preview with actual user data
+        // For now, it uses the data already in the template from session
+    }
+    
+    // Initialize first template as selected
+    templateCards[0].click();
+    
+    // Form submission
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const selectedTemplate = document.querySelector('input[name="template"]:checked').value;
+        
+        if (window.blueCollarApp) {
+            window.blueCollarApp.showToast(`Generating ${selectedTemplate} resume...`, 'info');
+        }
     });
 });
 </script>

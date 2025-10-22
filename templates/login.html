@@ -9,7 +9,7 @@
             <p class="auth-subtitle">Build your professional resume in minutes</p>
         </div>
 
-        <form method="POST" class="auth-form">
+        <form method="POST" class="auth-form" id="loginForm">
             <div class="form-group">
                 <label for="mobile" class="form-label">Mobile Number</label>
                 <div class="input-with-icon">
@@ -17,7 +17,7 @@
                     <input type="tel" id="mobile" name="mobile" class="form-input" 
                            placeholder="Enter your 10-digit mobile number" required
                            pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number"
-                           maxlength="10">
+                           maxlength="10" inputmode="numeric">
                 </div>
                 <small class="form-help">We'll send an OTP to verify your number</small>
             </div>
@@ -27,6 +27,14 @@
                 <i class="fas fa-paper-plane btn-icon"></i>
             </button>
         </form>
+
+        <div class="auth-divider">
+            <span>or</span>
+        </div>
+
+        <div class="alternative-login">
+            <p>Returning user? <a href="{{ url_for('passkey_login') }}" class="link">Use passkey login</a></p>
+        </div>
 
         <div class="auth-features">
             <div class="feature">
@@ -41,7 +49,136 @@
                 <i class="fas fa-briefcase feature-icon"></i>
                 <span>Job Recommendations</span>
             </div>
+            <div class="feature">
+                <i class="fas fa-shield-alt feature-icon"></i>
+                <span>Verified Professional Profile</span>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 2rem 0;
+    color: var(--gray);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+    font-size: 0.9rem;
+}
+
+.alternative-login {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.alternative-login p {
+    margin: 0;
+    color: var(--gray);
+}
+
+.link {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.auth-features {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--gray-dark);
+    font-size: 0.9rem;
+}
+
+.feature-icon {
+    color: var(--primary-blue);
+    width: 20px;
+    text-align: center;
+}
+
+.feature:last-child {
+    margin-bottom: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const mobileInput = document.getElementById('mobile');
+
+    // Auto-format mobile number
+    mobileInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 10) {
+            value = value.substring(0, 10);
+        }
+        e.target.value = value;
+    });
+
+    // Enhanced validation
+    loginForm.addEventListener('submit', function(e) {
+        const mobile = mobileInput.value.trim();
+        
+        if (mobile.length !== 10) {
+            e.preventDefault();
+            showError('Please enter a valid 10-digit mobile number');
+            return;
+        }
+
+        if (!/^[6-9]\d{9}$/.test(mobile)) {
+            e.preventDefault();
+            showError('Please enter a valid Indian mobile number');
+            return;
+        }
+    });
+
+    function showError(message) {
+        if (window.blueCollarApp && window.blueCollarApp.showToast) {
+            window.blueCollarApp.showToast(message, 'error');
+        } else {
+            alert(message);
+        }
+        
+        // Add visual error state
+        mobileInput.style.borderColor = 'var(--error)';
+        setTimeout(() => {
+            mobileInput.style.borderColor = '';
+        }, 3000);
+    }
+
+    // Demo auto-fill for testing
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setTimeout(() => {
+            if (!mobileInput.value) {
+                mobileInput.value = '9876543210';
+                if (window.blueCollarApp) {
+                    window.blueCollarApp.showToast('Demo number filled for testing', 'info');
+                }
+            }
+        }, 1000);
+    }
+});
+</script>
 {% endblock %}

@@ -1,11 +1,11 @@
-<!-- templates/verification.html -->
+<!-- templates/verification.html - Enhanced with dynamic profession fields -->
 {% extends "base.html" %}
 
 {% block content %}
 <div class="page-container">
     <div class="page-header">
-        <h1 class="page-title">Professional Details</h1>
-        <p class="page-subtitle">Tell us about your experience as a {{ profession }}</p>
+        <h1 class="page-title">Professional Details - {{ profession }}</h1>
+        <p class="page-subtitle">Tell us about your experience and qualifications</p>
     </div>
 
     <form method="POST" class="verification-form">
@@ -20,8 +20,25 @@
                 {% if field.type == 'text' %}
                 <textarea id="{{ field.name }}" name="{{ field.name }}" 
                           class="form-input" rows="3"
-                          placeholder="Describe your {{ field.label|lower }}"
+                          placeholder="Enter your {{ field.label|lower }}"
                           {% if field.required %}required{% endif %}></textarea>
+                
+                {% elif field.type == 'number' %}
+                <input type="number" id="{{ field.name }}" name="{{ field.name }}" 
+                       class="form-input"
+                       placeholder="Enter {{ field.label|lower }}"
+                       {% if field.required %}required{% endif %}
+                       min="0" max="50">
+                
+                {% elif field.type == 'select' %}
+                <select id="{{ field.name }}" name="{{ field.name }}" class="form-input" 
+                        {% if field.required %}required{% endif %}>
+                    <option value="">Select {{ field.label }}</option>
+                    {% for option in field.options %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+                
                 {% else %}
                 <input type="{{ field.type }}" id="{{ field.name }}" name="{{ field.name }}" 
                        class="form-input"
@@ -49,6 +66,20 @@
                 <h3>AI Assistance Available</h3>
             </div>
             <p>Our AI will help enhance your descriptions to make them more professional and effective for employers.</p>
+            <div class="ai-features">
+                <div class="ai-feature">
+                    <i class="fas fa-magic"></i>
+                    <span>Auto-correction and grammar improvement</span>
+                </div>
+                <div class="ai-feature">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Professional language enhancement</span>
+                </div>
+                <div class="ai-feature">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Industry-specific terminology</span>
+                </div>
+            </div>
         </div>
 
         <div class="form-actions">
@@ -65,6 +96,7 @@
     position: relative;
     display: flex;
     gap: 0.5rem;
+    align-items: flex-start;
 }
 
 .input-with-voice .form-input {
@@ -77,13 +109,18 @@
     border: none;
     border-radius: var(--border-radius);
     width: 50px;
+    height: 50px;
     cursor: pointer;
     transition: var(--transition);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .voice-btn:hover {
     background: var(--blue-dark);
+    transform: scale(1.05);
 }
 
 .voice-btn.listening {
@@ -117,71 +154,164 @@
 }
 
 .ai-assistance p {
-    margin: 0;
+    margin: 0 0 1rem 0;
     color: var(--gray);
+}
+
+.ai-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ai-feature {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--gray-dark);
+    font-size: 0.9rem;
+}
+
+.ai-feature i {
+    color: var(--primary-blue);
+    width: 16px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .input-with-voice {
+        flex-direction: column;
+    }
+    
+    .voice-btn {
+        align-self: flex-end;
+        width: 45px;
+        height: 45px;
+    }
+    
+    .ai-features {
+        gap: 0.75rem;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const voiceButtons = document.querySelectorAll('.voice-btn');
+    let currentRecognition = null;
     
     voiceButtons.forEach(button => {
         button.addEventListener('click', function() {
             const fieldName = this.dataset.field;
-            startVoiceInput(fieldName);
+            startVoiceInput(fieldName, this);
         });
     });
     
-    function startVoiceInput(fieldName) {
-        if (!('webkitSpeechRecognition' in window)) {
-            alert('Voice input is not supported in your browser. Please use Chrome or Edge.');
+    function startVoiceInput(fieldName, button) {
+        // Stop previous recognition if any
+        if (currentRecognition) {
+            currentRecognition.stop();
             return;
         }
         
-        const recognition = new webkitSpeechRecognition();
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('Voice input is not supported in your browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        currentRecognition = recognition;
+        
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = 'en-US';
+        recognition.lang = 'en-IN'; // Indian English
         
-        const button = document.querySelector(`[data-field="${fieldName}"]`);
         const textInput = document.getElementById(fieldName);
         const voiceInput = document.getElementById(`${fieldName}_voice`);
         
         recognition.onstart = function() {
             button.classList.add('listening');
             button.innerHTML = '<i class="fas fa-stop"></i>';
+            button.title = 'Click to stop listening';
         };
         
         recognition.onresult = function(event) {
             const transcript = event.results[0][0].transcript;
-            textInput.value = transcript;
-            voiceInput.value = transcript;
-            
-            // Auto-enhance text via AJAX
-            enhanceText(fieldName, transcript);
+            if (textInput) {
+                textInput.value = transcript;
+                if (voiceInput) {
+                    voiceInput.value = transcript;
+                }
+                
+                // Auto-enhance text via AJAX
+                enhanceText(fieldName, transcript);
+            }
         };
         
-        recognition.onerror = function() {
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
             stopVoiceInput(button);
+            showVoiceError(event.error);
         };
         
         recognition.onend = function() {
             stopVoiceInput(button);
         };
         
-        recognition.start();
+        try {
+            recognition.start();
+        } catch (error) {
+            console.error('Error starting speech recognition:', error);
+            showVoiceError('start_failed');
+        }
         
         // Add stop functionality
         button.addEventListener('click', function stopListening() {
-            recognition.stop();
-            button.removeEventListener('click', stopListening);
+            if (recognition) {
+                recognition.stop();
+            }
         });
     }
     
     function stopVoiceInput(button) {
         button.classList.remove('listening');
         button.innerHTML = '<i class="fas fa-microphone"></i>';
+        button.title = 'Click to start voice input';
+        currentRecognition = null;
+    }
+    
+    function showVoiceError(errorType) {
+        let message = 'Voice input failed. ';
+        
+        switch (errorType) {
+            case 'no-speech':
+                message += 'No speech was detected.';
+                break;
+            case 'audio-capture':
+                message += 'No microphone was found.';
+                break;
+            case 'not-allowed':
+                message += 'Microphone permission was denied.';
+                break;
+            case 'start_failed':
+                message += 'Could not start voice recognition.';
+                break;
+            default:
+                message += 'Please try again.';
+        }
+        
+        if (window.blueCollarApp && window.blueCollarApp.showToast) {
+            window.blueCollarApp.showToast(message, 'error');
+        } else {
+            alert(message);
+        }
     }
     
     async function enhanceText(fieldName, text) {
@@ -198,9 +328,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             const data = await response.json();
-            if (data.enhanced_text) {
-                document.getElementById(fieldName).value = data.enhanced_text;
-                document.getElementById(`${fieldName}_voice`).value = data.enhanced_text;
+            if (data.success && data.enhanced_text && data.enhanced_text !== text) {
+                const textInput = document.getElementById(fieldName);
+                const voiceInput = document.getElementById(`${fieldName}_voice`);
+                
+                if (textInput) {
+                    textInput.value = data.enhanced_text;
+                }
+                if (voiceInput) {
+                    voiceInput.value = data.enhanced_text;
+                }
+                
+                if (window.blueCollarApp && window.blueCollarApp.showToast) {
+                    window.blueCollarApp.showToast('Text enhanced using AI', 'success');
+                }
             }
         } catch (error) {
             console.error('Error enhancing text:', error);

@@ -141,7 +141,7 @@ class BlueCollarApp {
             // Simulate auto-fill for demo
             setTimeout(() => {
                 if (!otpInput.value) {
-                    otpInput.value = '123456';
+                    otpInput.value = request.form.get('otp')
                     this.showToast('OTP auto-filled for demo', 'info');
                 }
             }, 3000);

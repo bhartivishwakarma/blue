@@ -43,7 +43,7 @@
                 <div class="step-content">
                     <h3>Upload ID Document</h3>
                     <div class="form-group">
-                        <div class="file-upload-area">
+                        <div class="file-upload-area" id="fileUploadArea">
                             <input type="file" id="id_file" name="id_file" 
                                    accept=".png,.jpg,.jpeg,.pdf" required>
                             <div class="upload-placeholder">
@@ -51,6 +51,7 @@
                                 <p>Click to upload ID document</p>
                                 <small>Supported formats: PNG, JPG, PDF (Max 16MB)</small>
                             </div>
+                            <div class="upload-preview" id="uploadPreview"></div>
                         </div>
                     </div>
                 </div>
@@ -62,6 +63,32 @@
             <div>
                 <h4>Your data is secure</h4>
                 <p>We use encryption to protect your personal information. Your ID documents are stored securely and used only for verification purposes.</p>
+                <ul class="security-features">
+                    <li><i class="fas fa-lock"></i> End-to-end encryption</li>
+                    <li><i class="fas fa-eye-slash"></i> Data privacy protected</li>
+                    <li><i class="fas fa-check-circle"></i> Verified security standards</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="verification-benefits">
+            <h3>Benefits of Verification</h3>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <i class="fas fa-star benefit-icon"></i>
+                    <h4>Trust Building</h4>
+                    <p>Employers trust verified profiles 3x more</p>
+                </div>
+                <div class="benefit-card">
+                    <i class="fas fa-briefcase benefit-icon"></i>
+                    <h4>More Opportunities</h4>
+                    <p>Get access to premium job opportunities</p>
+                </div>
+                <div class="benefit-card">
+                    <i class="fas fa-bolt benefit-icon"></i>
+                    <h4>Faster Hiring</h4>
+                    <p>Verified profiles get hired 50% faster</p>
+                </div>
             </div>
         </div>
 
@@ -76,7 +103,7 @@
 
 <style>
 .verification-steps {
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto 3rem;
 }
 
@@ -88,10 +115,13 @@
     border: 2px solid #e9ecef;
     border-radius: var(--border-radius);
     transition: var(--transition);
+    background: var(--white);
 }
 
 .step:hover {
     border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
 }
 
 .step-number {
@@ -105,6 +135,7 @@
     justify-content: center;
     font-weight: 700;
     flex-shrink: 0;
+    font-size: 1.1rem;
 }
 
 .step-content {
@@ -114,6 +145,7 @@
 .step-content h3 {
     margin: 0 0 1rem 0;
     color: var(--black);
+    font-size: 1.2rem;
 }
 
 .file-upload-area {
@@ -124,10 +156,21 @@
     text-align: center;
     transition: var(--transition);
     cursor: pointer;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .file-upload-area:hover {
     border-color: var(--primary-blue);
+    background: rgba(0, 123, 255, 0.02);
+}
+
+.file-upload-area.has-file {
+    border-color: var(--success);
+    background: rgba(40, 167, 69, 0.05);
 }
 
 .file-upload-area input[type="file"] {
@@ -146,54 +189,300 @@
     margin-bottom: 1rem;
 }
 
+.upload-placeholder p {
+    margin: 0 0 0.5rem 0;
+    color: var(--black);
+    font-weight: 500;
+}
+
+.upload-placeholder small {
+    color: var(--gray);
+}
+
+.upload-preview {
+    display: none;
+    text-align: center;
+}
+
+.upload-preview.show {
+    display: block;
+}
+
+.preview-file {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--white);
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+}
+
+.file-icon {
+    font-size: 2rem;
+    color: var(--primary-blue);
+}
+
+.file-info {
+    flex: 1;
+    text-align: left;
+}
+
+.file-name {
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 0.25rem;
+}
+
+.file-size {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+.remove-file {
+    background: var(--error);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .security-note {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
-    padding: 1.5rem;
+    gap: 1.5rem;
+    padding: 2rem;
     background: rgba(0, 123, 255, 0.05);
     border-radius: var(--border-radius);
     margin-bottom: 2rem;
-    max-width: 600px;
+    max-width: 700px;
     margin-left: auto;
     margin-right: auto;
 }
 
 .security-icon {
     color: var(--primary-blue);
-    font-size: 1.5rem;
+    font-size: 2rem;
     margin-top: 0.25rem;
 }
 
 .security-note h4 {
     margin: 0 0 0.5rem 0;
     color: var(--black);
+    font-size: 1.2rem;
 }
 
 .security-note p {
+    margin: 0 0 1rem 0;
+    color: var(--gray);
+}
+
+.security-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.security-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-dark);
+    font-size: 0.9rem;
+}
+
+.security-features li i {
+    color: var(--success);
+}
+
+.verification-benefits {
+    margin-bottom: 3rem;
+}
+
+.verification-benefits h3 {
+    text-align: center;
+    margin: 0 0 2rem 0;
+    color: var(--black);
+    font-size: 1.5rem;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.benefit-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--white);
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+}
+
+.benefit-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow);
+}
+
+.benefit-icon {
+    font-size: 2.5rem;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+}
+
+.benefit-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--black);
+    font-size: 1.1rem;
+}
+
+.benefit-card p {
     margin: 0;
     color: var(--gray);
     font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .step {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .step-number {
+        align-self: center;
+    }
+    
+    .security-note {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .file-upload-area {
+        padding: 1.5rem;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('id_file');
-    const uploadArea = fileInput.parentElement;
+    const uploadArea = document.getElementById('fileUploadArea');
+    const uploadPreview = document.getElementById('uploadPreview');
     const placeholder = uploadArea.querySelector('.upload-placeholder');
     
     fileInput.addEventListener('change', function() {
         if (this.files.length > 0) {
-            const fileName = this.files[0].name;
-            placeholder.innerHTML = `
-                <i class="fas fa-file-alt upload-icon"></i>
-                <p>${fileName}</p>
-                <small>Click to change file</small>
+            const file = this.files[0];
+            const fileName = file.name;
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2); // MB
+            
+            // Validate file size
+            if (file.size > 16 * 1024 * 1024) {
+                alert('File size must be less than 16MB');
+                this.value = '';
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please upload PNG, JPG, or PDF files only');
+                this.value = '';
+                return;
+            }
+            
+            // Show preview
+            placeholder.style.display = 'none';
+            uploadPreview.innerHTML = `
+                <div class="preview-file">
+                    <div class="file-icon">
+                        <i class="fas fa-${file.type.includes('image') ? 'file-image' : 'file-pdf'}"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${fileName}</div>
+                        <div class="file-size">${fileSize} MB</div>
+                    </div>
+                    <button type="button" class="remove-file" title="Remove file">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             `;
-            uploadArea.style.borderColor = 'var(--success)';
+            uploadPreview.classList.add('show');
+            uploadArea.classList.add('has-file');
+            
+            // Add remove file functionality
+            const removeBtn = uploadPreview.querySelector('.remove-file');
+            removeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fileInput.value = '';
+                uploadPreview.classList.remove('show');
+                uploadPreview.innerHTML = '';
+                placeholder.style.display = 'block';
+                uploadArea.classList.remove('has-file');
+            });
+            
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast('File selected successfully', 'success');
+            }
         }
     });
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'var(--primary-blue)';
+        this.style.background = 'rgba(0, 123, 255, 0.05)';
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '';
+        this.style.background = '';
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '';
+        this.style.background = '';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
+    
+    // Auto-fill demo data for testing
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setTimeout(() => {
+            const idType = document.getElementById('id_type');
+            const idNumber = document.getElementById('id_number');
+            
+            if (!idType.value) {
+                idType.value = 'Aadhaar';
+                idNumber.value = 'XXXX XXXX XXXX';
+                
+                if (window.blueCollarApp) {
+                    window.blueCollarApp.showToast('Demo ID data filled for testing', 'info');
+                }
+            }
+        }, 1000);
+    }
 });
 </script>
 {% endblock %}

@@ -19,6 +19,11 @@
                             <div>
                                 <h4>Yes, set up passkey</h4>
                                 <p>Use PIN, pattern, or fingerprint for quick login</p>
+                                <ul class="option-features">
+                                    <li><i class="fas fa-check"></i> Faster login experience</li>
+                                    <li><i class="fas fa-check"></i> No need to remember passwords</li>
+                                    <li><i class="fas fa-check"></i> Enhanced security</li>
+                                </ul>
                             </div>
                         </div>
                     </label>
@@ -30,10 +35,23 @@
                             <div>
                                 <h4>No, use OTP each time</h4>
                                 <p>Receive SMS OTP for every login</p>
+                                <ul class="option-features">
+                                    <li><i class="fas fa-check"></i> Maximum security</li>
+                                    <li><i class="fas fa-check"></i> No device binding</li>
+                                    <li><i class="fas fa-check"></i> Use any device</li>
+                                </ul>
                             </div>
                         </div>
                     </label>
                 </div>
+            </div>
+
+            <div class="security-info">
+                <div class="security-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h4>Security Information</h4>
+                </div>
+                <p>Your data is protected with industry-standard encryption. Passkeys use biometric authentication for enhanced security.</p>
             </div>
 
             <button type="submit" class="btn btn-primary btn-full">
@@ -41,6 +59,13 @@
                 <i class="fas fa-arrow-right btn-icon"></i>
             </button>
         </form>
+
+        <div class="auth-footer">
+            <p class="footer-note">
+                <i class="fas fa-info-circle"></i>
+                You can change this setting anytime in your profile
+            </p>
+        </div>
     </div>
 </div>
 
@@ -48,7 +73,8 @@
 .option-cards {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .option-card {
@@ -57,10 +83,13 @@
     padding: 1.5rem;
     cursor: pointer;
     transition: var(--transition);
+    background: var(--white);
 }
 
 .option-card:hover {
     border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
 }
 
 .option-card input[type="radio"]:checked + .option-content {
@@ -70,29 +99,164 @@
 
 .option-content {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    align-items: flex-start;
+    gap: 1.5rem;
     transition: var(--transition);
 }
 
 .option-icon {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--primary-blue);
+    margin-top: 0.25rem;
+    flex-shrink: 0;
 }
 
 .option-content h4 {
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.5rem 0;
     color: var(--black);
+    font-size: 1.2rem;
 }
 
 .option-content p {
-    margin: 0;
+    margin: 0 0 1rem 0;
     color: var(--gray);
+}
+
+.option-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.option-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-dark);
     font-size: 0.9rem;
+}
+
+.option-features li i {
+    color: var(--success);
+    font-size: 0.8rem;
 }
 
 .option-card input[type="radio"] {
     display: none;
 }
+
+.security-info {
+    background: rgba(0, 123, 255, 0.05);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.security-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.security-header i {
+    color: var(--primary-blue);
+    font-size: 1.2rem;
+}
+
+.security-header h4 {
+    margin: 0;
+    color: var(--black);
+    font-size: 1.1rem;
+}
+
+.security-info p {
+    margin: 0;
+    color: var(--gray);
+    line-height: 1.5;
+    font-size: 0.9rem;
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.footer-note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--gray);
+    font-size: 0.9rem;
+    text-align: center;
+    justify-content: center;
+}
+
+.footer-note i {
+    color: var(--primary-blue);
+}
+
+@media (max-width: 768px) {
+    .option-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .option-icon {
+        align-self: center;
+    }
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const optionCards = document.querySelectorAll('.option-card');
+    
+    optionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            optionCards.forEach(c => {
+                c.classList.remove('selected');
+                c.style.borderColor = '';
+                c.style.background = '';
+            });
+            
+            this.classList.add('selected');
+            this.style.borderColor = 'var(--primary-blue)';
+            this.style.background = 'rgba(0, 123, 255, 0.05)';
+            
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            // Show selection feedback
+            const optionType = radio.value === 'yes' ? 'Passkey' : 'OTP';
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast(`${optionType} login selected`, 'success');
+            }
+        });
+    });
+    
+    // Initialize first option as selected
+    optionCards[0].click();
+    
+    // Demo passkey setup simulation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const staySigned = document.querySelector('input[name="stay_signed"]:checked').value;
+        
+        if (staySigned === 'yes') {
+            // Simulate passkey setup
+            setTimeout(() => {
+                if (window.blueCollarApp) {
+                    window.blueCollarApp.showToast('Passkey setup completed successfully!', 'success');
+                }
+            }, 500);
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Blue Collar Assistant</title>
+<style>
+  :root{
+    --blue:#1976d2;
+    --green:#28a745;
+    --bg:#f5f7fb;
+  }
+  body{font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);margin:0; padding:0;}
+  /* Floating button */
+  #assistantButton{
+    position:fixed; right:22px; bottom:22px;
+    width:64px; height:64px; border-radius:50%;
+    background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.2);
+    background-image:url('assistant_icon.png');
+    background-size:cover; background-position:center;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  /* Chat container */
+  #chatbox{
+    position:fixed; right:22px; bottom:100px; width:380px; max-height:600px;
+    display:none; flex-direction:column; background:#fff; border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden;
+  }
+  #chatHeader{ background:var(--blue); color:#fff; padding:12px 16px; font-weight:600; display:flex; align-items:center; gap:10px;}
+  #chatHeader img{width:28px;height:28px;border-radius:50%;}
+  #messages { padding:12px; overflow:auto; flex:1; background:linear-gradient(#fff, #fbfcff);}
+  .bubble{ padding:10px 12px; margin:6px 0; display:inline-block; border-radius:14px; max-width:80%; word-wrap:break-word; }
+  .user { background:var(--blue); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+  .bot  { background:var(--green); color:#fff; align-self:flex-start; border-bottom-left-radius:4px; }
+  #loading { display:none; text-align:center; color:#666; padding:6px 0; font-size:13px;}
+  #inputArea { display:flex; gap:8px; padding:10px; border-top:1px solid #eee; align-items:center; }
+  #langSelect{ padding:8px; border-radius:8px; border:1px solid #ddd; background:#fff; }
+  #textInput{ flex:1; padding:10px 12px; border-radius:8px; border:1px solid #ddd; font-size:15px; }
+  .iconBtn{ width:44px; height:44px; border-radius:8px; border:none; background:var(--blue); color:#fff; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; }
+  .smallBtn{ padding:8px 10px; border-radius:8px; border:none; background:#eee; cursor:pointer; }
+  /* mobile responsiveness */
+  @media (max-width:420px){
+    #chatbox{ right:12px; left:12px; width:auto; bottom:90px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating assistant icon -->
+<div id="assistantButton" title="Open Assistant"></div>
+
+<!-- Chatbox -->
+<div id="chatbox" role="dialog" aria-label="Blue Collar Assistant">
+  <div id="chatHeader">
+    <img src="assistant_icon.png" alt="assistant" />
+    <div>Blue Collar Assistant</div>
+  </div>
+
+  <div id="messages" aria-live="polite"></div>
+  <div id="loading">🤖 Assistant is typing...</div>
+
+  <div id="inputArea">
+    <select id="langSelect" aria-label="Language">
+      <option value="en">English</option>
+      <option value="hi">Hindi</option>
+    </select>
+
+    <input id="textInput" placeholder="Type your message..." aria-label="Type message" />
+
+    <button id="micBtn" class="iconBtn" title="Speak (microphone)">🎤</button>
+    <button id="sendBtn" class="iconBtn" title="Send">➡</button>
+  </div>
+</div>
+
+<script>
+const API = '/chat';
+const assistantButton = document.getElementById('assistantButton');
+const chatbox = document.getElementById('chatbox');
+const messages = document.getElementById('messages');
+const loading = document.getElementById('loading');
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const langSelect = document.getElementById('langSelect');
+
+assistantButton.addEventListener('click', () => {
+  chatbox.style.display = chatbox.style.display === 'flex' ? 'none' : 'flex';
+  if (chatbox.style.display === 'flex') {
+    textInput.focus();
+  }
+});
+
+function addMessage(sender, text) {
+  const d = document.createElement('div');
+  d.className = 'bubble ' + (sender === 'user' ? 'user' : 'bot');
+  d.textContent = text;
+  // wrap in container to control alignment
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.justifyContent = sender === 'user' ? 'flex-end' : 'flex-start';
+  container.appendChild(d);
+  messages.appendChild(container);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function sendText() {
+  const text = textInput.value.trim();
+  const lang = langSelect.value;
+  if (!text) return;
+  addMessage('user', text);
+  textInput.value = '';
+  loading.style.display = 'block';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text, lang })
+    });
+    const data = await res.json();
+    if (data.error) {
+      addMessage('bot', '⚠ ' + (data.error || 'Server error'));
+    } else {
+      addMessage('bot', data.reply);
+      // Play base64 audio
+      const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
+      // Attempt to play; some browsers block autoplay until user interacted (we have)
+      audio.play().catch(e => {
+        console.warn('Audio play was blocked:', e);
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    addMessage('bot', '⚠ Unable to connect to assistant.');
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+// Send on button click or Enter
+sendBtn.addEventListener('click', sendText);
+textInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); sendText(); }
+});
+
+// Voice recognition (browser Web Speech API)
+let recognition = null;
+function setupRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    micBtn.style.display = 'none';
+    return null;
+  }
+  recognition = new SpeechRecognition();
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.onresult = (ev) => {
+    const transcript = ev.results[0][0].transcript;
+    textInput.value = transcript;
+    sendText();
+  };
+  recognition.onerror = (ev) => {
+    console.error('Speech recognition error', ev.error);
+  };
+  recognition.onend = () => {
+    // UI update if needed
+    micBtn.textContent = '🎤';
+  };
+}
+setupRecognition();
+
+micBtn.addEventListener('click', () => {
+  if (!recognition) return;
+  const lang = langSelect.value;
+  recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+  try {
+    recognition.start();
+    micBtn.textContent = '⏺';
+  } catch (e) {
+    console.warn('Could not start recognition', e);
+  }
+});
+
+// Provide some quick starter message when opened first time
+let welcomed = false;
+assistantButton.addEventListener('click', () => {
+  if (!welcomed) {
+    addMessage('bot', langSelect.value === 'hi' ? 'नमस्ते! मैं आपकी नौकरी और रिज्यूमे में मदद कर सकता हूँ। बोलें या टाइप करें।' : 'Hello! I can help with jobs and resumes. Speak or type your question.');
+    welcomed = true;
+  }
+});
+</script>
+</body>
+</html>

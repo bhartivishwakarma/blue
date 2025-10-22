@@ -8,7 +8,7 @@
         <p class="page-subtitle">Choose the trade that best matches your skills and experience</p>
     </div>
 
-    <form method="POST">
+    <form method="POST" class="profession-form">
         <div class="profession-grid">
             {% for profession in professions %}
             <label class="profession-card">
@@ -29,28 +29,232 @@
             </button>
         </div>
     </form>
+
+    <div class="profession-guide">
+        <h3 class="guide-title">Not sure which profession to choose?</h3>
+        <div class="guide-steps">
+            <div class="guide-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Consider Your Skills</h4>
+                    <p>Choose the profession that best matches your technical skills and experience</p>
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Think About Specialization</h4>
+                    <p>Select based on your area of expertise within your field</p>
+                </div>
+            </div>
+            <div class="guide-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Career Goals</h4>
+                    <p>Choose the path that aligns with your long-term career objectives</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
-.profession-content {
-    transition: var(--transition);
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.profession-card input[type="radio"]:checked + .profession-content {
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: var(--gray);
+    font-size: 1.2rem;
+}
+
+.profession-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 3rem 0;
+}
+
+.profession-card {
+    background: var(--white);
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.profession-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.profession-card:hover::before {
+    left: 100%;
+}
+
+.profession-card:hover {
     border-color: var(--primary-blue);
-    background: rgba(0, 123, 255, 0.05);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.15);
+}
+
+.profession-card.selected {
+    border-color: var(--primary-blue);
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.05), rgba(0, 123, 255, 0.02));
     transform: translateY(-2px);
 }
 
+.profession-content {
+    transition: var(--transition);
+    position: relative;
+    z-index: 1;
+}
+
+.profession-icon {
+    font-size: 3rem;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.profession-card:hover .profession-icon {
+    transform: scale(1.1);
+    color: var(--blue-dark);
+}
+
+.profession-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 0.5rem;
+}
+
 .profession-description {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: var(--gray);
-    margin-top: 0.5rem;
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 .profession-card input[type="radio"] {
     display: none;
+}
+
+.profession-guide {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.guide-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 2rem;
+}
+
+.guide-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.guide-step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.step-number {
+    background: var(--primary-blue);
+    color: var(--white);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+.step-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--black);
+    font-size: 1.1rem;
+}
+
+.step-content p {
+    margin: 0;
+    color: var(--gray);
+    line-height: 1.5;
+    font-size: 0.9rem;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn-large {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .profession-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .guide-steps {
+        grid-template-columns: 1fr;
+    }
+    
+    .guide-step {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .step-number {
+        align-self: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .profession-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
 }
 </style>
 
@@ -60,13 +264,58 @@ document.addEventListener('DOMContentLoaded', function() {
     
     professionCards.forEach(card => {
         card.addEventListener('click', function() {
-            professionCards.forEach(c => c.classList.remove('selected'));
-            this.classList.add('selected');
+            // Remove selection from all cards
+            professionCards.forEach(c => {
+                c.classList.remove('selected');
+                c.style.borderColor = '';
+                c.style.background = '';
+            });
             
+            // Add selection to clicked card
+            this.classList.add('selected');
+            this.style.borderColor = 'var(--primary-blue)';
+            this.style.background = 'rgba(0, 123, 255, 0.05)';
+            
+            // Check the radio button
             const radio = this.querySelector('input[type="radio"]');
             radio.checked = true;
+            
+            // Show confirmation
+            if (window.blueCollarApp) {
+                window.blueCollarApp.showToast(`${radio.value} selected`, 'success');
+            }
         });
     });
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            const selectedCard = document.querySelector('.profession-card.selected');
+            let nextCard;
+            
+            if (e.key === 'ArrowRight') {
+                nextCard = selectedCard ? selectedCard.nextElementSibling : professionCards[0];
+            } else {
+                nextCard = selectedCard ? selectedCard.previousElementSibling : professionCards[professionCards.length - 1];
+            }
+            
+            if (nextCard) {
+                nextCard.click();
+                nextCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+        
+        if (e.key === 'Enter' && document.querySelector('.profession-card.selected')) {
+            document.querySelector('form').submit();
+        }
+    });
+    
+    // Initialize first card as selected if none selected
+    setTimeout(() => {
+        if (!document.querySelector('.profession-card.selected') && professionCards.length > 0) {
+            professionCards[0].click();
+        }
+    }, 100);
 });
 </script>
 {% endblock %}

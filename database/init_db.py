@@ -11,7 +11,8 @@ def init_database():
         host=Config.MYSQL_HOST,
         user=Config.MYSQL_USER,
         password=Config.MYSQL_PASSWORD,
-        database=Config.MYSQL_DATABASE
+        auth_plugin='mysql_native_password'
+        
     )
     cursor = conn.cursor()
     
@@ -29,7 +30,9 @@ def init_database():
         host=Config.MYSQL_HOST,
         user=Config.MYSQL_USER,
         password=Config.MYSQL_PASSWORD,
-        database=Config.MYSQL_DATABASE
+        database=Config.MYSQL_DATABASE,
+        auth_plugin='mysql_native_password'
+
     )
     cursor = conn.cursor()
     

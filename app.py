@@ -1,467 +1,624 @@
-# app.py
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, flash
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 import mysql.connector
+from config import Config
+from services.file_upload import save_uploaded_file
+from services.sms_service import send_sms
+from utils.resume_generator import generate_resume_pdf
+from utils.translation import translator
+from utils.speech_recognition import transcribe_audio
+from utils.ai_helper import AIHelper
+from utils.job_recommender import JobRecommender
+from utils.auth import Auth
 import json
+import random
 import os
 from datetime import datetime, timedelta
-from config import Config
-from utils.auth import generate_otp, verify_otp, setup_passkey, verify_passkey, hash_password
-from utils.ai_helper import generate_profession_fields, enhance_text, get_job_recommendations, get_chatbot_response
-from utils.resume_generator import generate_resume_pdf
-from utils.speech_recognition import transcribe_audio
-from services.sms_service import send_sms
-from services.file_upload import save_uploaded_file, allowed_file
-import secrets
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'super-secret-key-2025')
+app.secret_key = Config.SECRET_KEY
 
 
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+PROFESSIONS_CONFIG = {
+    "Driver": {
+        "icon": "fas fa-truck",
+        "fields": [
+            {"name": "license_number", "label": "Driving License Number", "type": "text", "required": True},
+            {"name": "vehicle_type", "label": "Vehicle Type", "type": "select", "options": ["Car", "Motorcycle", "Truck", "Bus", "Auto Rickshaw"], "required": True},
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "areas_covered", "label": "Areas Covered", "type": "text", "required": False},
+            {"name": "license_type", "label": "License Type", "type": "select", "options": ["LMV", "MCWG", "HMV", "Transport"], "required": True}
+        ]
+    },
+    "Electrician": {
+        "icon": "fas fa-bolt", 
+        "fields": [
+            {"name": "license_number", "label": "Electrician License Number", "type": "text", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Domestic", "Industrial", "Commercial", "Automotive"], "required": True},
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "certifications", "label": "Certifications", "type": "text", "required": False},
+            {"name": "wiring_types", "label": "Wiring Types Known", "type": "text", "required": False}
+        ]
+    },
+    "Plumber": {
+        "icon": "fas fa-faucet",
+        "fields": [
+            {"name": "license_number", "label": "Plumber License Number", "type": "text", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Residential", "Commercial", "Industrial", "Pipeline"], "required": True},
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "pipe_materials", "label": "Pipe Materials Worked With", "type": "text", "required": False},
+            {"name": "tools", "label": "Tools Available", "type": "text", "required": False}
+        ]
+    },
+    "Carpenter": {
+        "icon": "fas fa-hammer",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Furniture", "Cabinet", "Construction", "Repair"], "required": True},
+            {"name": "wood_types", "label": "Wood Types Worked With", "type": "text", "required": False},
+            {"name": "tools", "label": "Tools Available", "type": "text", "required": False},
+            {"name": "projects_completed", "label": "Projects Completed", "type": "number", "required": False}
+        ]
+    },
+    "Mechanic": {
+        "icon": "fas fa-tools",
+        "fields": [
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Car", "Motorcycle", "Heavy Vehicle", "AC Repair", "General"], "required": True},
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "certifications", "label": "Certifications", "type": "text", "required": False},
+            {"name": "tools", "label": "Tools Available", "type": "text", "required": False},
+            {"name": "brands_expertise", "label": "Brands Expertise", "type": "text", "required": False}
+        ]
+    },
+    "Welder": {
+        "icon": "fas fa-fire",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "welding_types", "label": "Welding Types", "type": "select", "options": ["Arc", "MIG", "TIG", "Gas", "Spot"], "required": True},
+            {"name": "materials", "label": "Materials Worked With", "type": "text", "required": False},
+            {"name": "certifications", "label": "Welding Certifications", "type": "text", "required": False},
+            {"name": "safety_training", "label": "Safety Training", "type": "select", "options": ["Yes", "No"], "required": True}
+        ]
+    },
+    "Construction Worker": {
+        "icon": "fas fa-hard-hat",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Masonry", "Painting", "Welding", "Scaffolding", "General Labor"], "required": True},
+            {"name": "skills", "label": "Specific Skills", "type": "text", "required": False},
+            {"name": "tools", "label": "Tools Available", "type": "text", "required": False},
+            {"name": "safety_certifications", "label": "Safety Certifications", "type": "text", "required": False}
+        ]
+    },
+    "Painter": {
+        "icon": "fas fa-paint-roller",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "painting_types", "label": "Painting Types", "type": "select", "options": ["Interior", "Exterior", "Commercial", "Residential", "Industrial"], "required": True},
+            {"name": "surface_types", "label": "Surface Types", "type": "text", "required": False},
+            {"name": "tools", "label": "Tools Available", "type": "text", "required": False},
+            {"name": "brands_expertise", "label": "Paint Brands Expertise", "type": "text", "required": False}
+        ]
+    },
+    "Mason": {
+        "icon": "fas fa-ruler-combined",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Brick", "Stone", "Concrete", "Tile", "All Types"], "required": True},
+            {"name": "materials", "label": "Materials Worked With", "type": "text", "required": False},
+            {"name": "tools", "label": "Tools Available", "type": "text", "required": False},
+            {"name": "projects_completed", "label": "Projects Completed", "type": "number", "required": False}
+        ]
+    },
+    "Gardener": {
+        "icon": "fas fa-seedling",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Landscaping", "Lawn Care", "Tree Surgery", "Nursery", "General Gardening"], "required": True},
+            {"name": "plant_types", "label": "Plant Types Expertise", "type": "text", "required": False},
+            {"name": "tools", "label": "Gardening Tools", "type": "text", "required": False},
+            {"name": "organic_methods", "label": "Organic Methods", "type": "select", "options": ["Yes", "No"], "required": False}
+        ]
+    },
+    "Security Guard": {
+        "icon": "fas fa-shield-alt",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "license_number", "label": "Security License Number", "type": "text", "required": True},
+            {"name": "specialization", "label": "Specialization", "type": "select", "options": ["Corporate", "Residential", "Event", "Industrial", "Mall Security"], "required": True},
+            {"name": "training_certifications", "label": "Training Certifications", "type": "text", "required": False},
+            {"name": "shift_preference", "label": "Shift Preference", "type": "select", "options": ["Day", "Night", "Rotating", "Any"], "required": True}
+        ]
+    },
+    "Cleaner": {
+        "icon": "fas fa-broom",
+        "fields": [
+            {"name": "experience_years", "label": "Years of Experience", "type": "number", "required": True},
+            {"name": "cleaning_types", "label": "Cleaning Types", "type": "select", "options": ["House", "Office", "Industrial", "Commercial", "Car"], "required": True},
+            {"name": "equipment", "label": "Cleaning Equipment", "type": "text", "required": False},
+            {"name": "chemicals_knowledge", "label": "Cleaning Chemicals Knowledge", "type": "select", "options": ["Basic", "Intermediate", "Expert"], "required": False},
+            {"name": "areas_covered", "label": "Areas Covered", "type": "text", "required": False}
+        ]
+    }
+}
+
+
+ai_helper = AIHelper()
+job_recommender = JobRecommender()
+auth_helper = Auth()
 
 def get_db_connection():
     return mysql.connector.connect(
-        host=app.config['MYSQL_HOST'],
-        user=app.config['MYSQL_USER'],
-        password=app.config['MYSQL_PASSWORD'],
-        database=app.config['MYSQL_DATABASE'],
-        auth_plugin='mysql_native_password'
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DATABASE
     )
 
-@app.before_request
-def make_session_permanent():
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(days=7)
+def save_user_to_db(user_data):
+    """Save user data to database"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO users (mobile, full_name, email, gender, address, profession, 
+                             verification_data, id_verified, id_data, language, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            full_name = VALUES(full_name),
+            email = VALUES(email),
+            gender = VALUES(gender),
+            address = VALUES(address),
+            profession = VALUES(profession),
+            verification_data = VALUES(verification_data),
+            id_verified = VALUES(id_verified),
+            id_data = VALUES(id_data),
+            updated_at = CURRENT_TIMESTAMP
+        ''', (
+            user_data['mobile'],
+            user_data['full_name'],
+            user_data['email'],
+            user_data['gender'],
+            user_data['address'],
+            user_data['profession'],
+            json.dumps(user_data['verification_data']),
+            user_data['id_verified'],
+            json.dumps(user_data['id_data']) if user_data['id_data'] else None,
+            user_data['language']
+        ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Database error: {e}")
+        return False
+
+def get_user_from_db(mobile):
+    """Get user data from database"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute('SELECT * FROM users WHERE mobile = %s', (mobile,))
+        user = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        return user
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
 
 @app.route('/')
 def index():
-    if 'user_id' in session:
-        return redirect(url_for('language_selection'))
-    return redirect(url_for('login'))
+    return redirect(url_for('language'))
+
+@app.route('/language', methods=['GET', 'POST'])
+def language():
+    if request.method == 'POST':
+        session['language'] = request.form.get('language', 'en')
+        return redirect(url_for('login'))
+    
+    languages = [
+        {'code': 'en', 'name': 'English'},
+        {'code': 'hi', 'name': 'हिन्दी'},
+        {'code': 'ta', 'name': 'தமிழ்'},
+        {'code': 'te', 'name': 'తెలుగు'},
+        {'code': 'bn', 'name': 'বাংলা'},
+        {'code': 'mr', 'name': 'मराठी'},
+        {'code': 'gu', 'name': 'ગુજરાતી'},
+        {'code': 'kn', 'name': 'ಕನ್ನಡ'},
+        {'code': 'ml', 'name': 'മലയാളം'},
+        {'code': 'pa', 'name': 'ਪੰਜਾਬੀ'}
+    ]
+    
+    selected_language = session.get('language', 'en')
+    return render_template('language.html', languages=languages, selected_language=selected_language)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         mobile = request.form.get('mobile')
-        
-        if not mobile or len(mobile) != 10 or not mobile.isdigit():
+        if mobile and len(mobile) == 10 and mobile.isdigit():
+            session['mobile'] = mobile
+            
+            # Check if user exists for passkey login
+            user = get_user_from_db(mobile)
+            if user:
+                return redirect(url_for('passkey_login'))
+            else:
+                # New user - send OTP
+                session['otp'] = str(random.randint(100000, 999999))
+                session['otp_created'] = datetime.now().isoformat()
+                send_sms(mobile, f"Your OTP for BlueCollarResume is: {session['otp']}")
+                return redirect(url_for('verify_otp'))
+        else:
             flash('Please enter a valid 10-digit mobile number', 'error')
-            return render_template('login.html')
-        
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE mobile = %s", (mobile,))
-        user = cursor.fetchone()
-        
-        if user and user.get('has_passkey'):
-            session['mobile_for_passkey'] = mobile
-            return redirect(url_for('passkey_login'))
-        
-        # Generate and send OTP
-        otp = generate_otp()
-        session['otp'] = otp
-        session['mobile'] = mobile
-        session['otp_created_at'] = datetime.now().isoformat()
-        
-        # Send SMS (in production)
-        try:
-            send_sms(mobile, f"Your BlueCollarResume OTP is: {otp}. Valid for 10 minutes.")
-            flash('OTP sent to your mobile number', 'success')
-        except Exception as e:
-            # For development, show OTP on screen
-            flash(f'OTP (for demo): {otp}', 'info')
-        
-        return redirect(url_for('verify_otp'))
     
     return render_template('login.html')
-
-@app.route('/passkey-login', methods=['GET', 'POST'])
-def passkey_login():
-    mobile = session.get('mobile_for_passkey')
-    if not mobile:
-        return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-        passkey_input = request.form.get('passkey')
-        remember_device = request.form.get('remember_device') == 'on'
-        
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE mobile = %s", (mobile,))
-        user = cursor.fetchone()
-        
-        if user and verify_passkey(user['id'], passkey_input):
-            session['user_id'] = user['id']
-            session.pop('mobile_for_passkey', None)
-            
-            if remember_device:
-                device_token = secrets.token_urlsafe(32)
-                session['device_token'] = device_token
-                # Store device token in database (simplified)
-            
-            flash('Login successful!', 'success')
-            return redirect(url_for('language_selection'))
-        else:
-            flash('Invalid passkey. Please try again or use OTP login.', 'error')
-    
-    return render_template('passkey_login.html', mobile=mobile)
-
 @app.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():
-    if 'otp' not in session:
+    if 'mobile' not in session:
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        entered_otp = request.form.get('otp')
+        otp = request.form.get('otp')
+        stored_otp = session.get('otp')
+        otp_created = session.get('otp_created')
         
         # Check OTP expiration (10 minutes)
-        otp_created_at = datetime.fromisoformat(session.get('otp_created_at'))
-        if datetime.now() - otp_created_at > timedelta(minutes=10):
-            flash('OTP has expired. Please request a new one.', 'error')
-            return redirect(url_for('login'))
+        if otp_created:
+            created_time = datetime.fromisoformat(otp_created)
+            if datetime.now() - created_time > timedelta(minutes=10):
+                flash('OTP has expired. Please request a new one.', 'error')
+                return redirect(url_for('login'))
         
-        if verify_otp(entered_otp, session.get('otp')):
-            mobile = session.get('mobile')
-            
-            conn = get_db_connection()
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM users WHERE mobile = %s", (mobile,))
-            user = cursor.fetchone()
-            
-            if not user:
-                # Create new user
-                cursor.execute(
-                    "INSERT INTO users (mobile, created_at) VALUES (%s, %s)",
-                    (mobile, datetime.now())
-                )
-                user_id = cursor.lastrowid
-                conn.commit()
-            else:
-                user_id = user['id']
-            
-            session['user_id'] = user_id
+        if otp == stored_otp:
+            session['authenticated'] = True
             session.pop('otp', None)
-            session.pop('mobile', None)
-            session.pop('otp_created_at', None)
-            
-            flash('Login successful!', 'success')
-            return redirect(url_for('stay_signed_in'))
+            session.pop('otp_created', None)
+            return redirect(url_for('profession'))
         else:
             flash('Invalid OTP. Please try again.', 'error')
     
     return render_template('verify_otp.html')
 
-@app.route('/stay-signed-in', methods=['GET', 'POST'])
-def stay_signed_in():
-    if 'user_id' not in session:
+            
+        
+       
+@app.route('/passkey-login', methods=['GET', 'POST'])
+def passkey_login():
+    if 'mobile' not in session:
+        return redirect(url_for('login'))
+    
+    user = get_user_from_db(session['mobile'])
+    if not user:
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        stay_signed = request.form.get('stay_signed') == 'yes'
-        if stay_signed:
-            setup_passkey(session['user_id'])
-            flash('Passkey setup completed! You can use it for future logins.', 'success')
+        passkey = request.form.get('passkey')
+        remember_device = request.form.get('remember_device')
         
-        return redirect(url_for('language_selection'))
+        # In a real app, verify passkey against stored hash
+        if passkey:
+            session['authenticated'] = True
+            if remember_device:
+                session['remember_me'] = True
+                session.permanent = True
+            return redirect(url_for('jobs'))
+        else:
+            flash('Invalid passkey. Please try again.', 'error')
     
-    return render_template('stay_signed_in.html')
+    return render_template('passkey_login.html', mobile=session['mobile'])
 
-@app.route('/language-selection', methods=['GET', 'POST'])
-def language_selection():
-    if 'user_id' not in session:
+@app.route('/profession', methods=['GET', 'POST'])
+def profession():
+    if not session.get('authenticated'):
         return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-        language = request.form.get('language')
-        
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE users SET language = %s WHERE id = %s",
-            (language, session['user_id'])
-        )
-        conn.commit()
-        
-        session['language'] = language
-        flash('Language preference saved!', 'success')
-        return redirect(url_for('profession_selection'))
-    
-    languages = [
-        {'code': 'en', 'name': 'English'},
-        {'code': 'hi', 'name': 'Hindi'},
-        {'code': 'ta', 'name': 'Tamil'},
-        {'code': 'te', 'name': 'Telugu'},
-        {'code': 'bn', 'name': 'Bengali'},
-        {'code': 'mr', 'name': 'Marathi'}
-    ]
-    
-    return render_template('language.html', languages=languages)
-
-@app.route('/profession-selection', methods=['GET', 'POST'])
-def profession_selection():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM professions ORDER BY name")
-    professions = cursor.fetchall()
     
     if request.method == 'POST':
         profession = request.form.get('profession')
-        
         if profession:
-            cursor.execute(
-                "UPDATE users SET profession = %s WHERE id = %s",
-                (profession, session['user_id'])
-            )
-            conn.commit()
-            
             session['profession'] = profession
-            flash(f'Profession set to: {profession}', 'success')
-            return redirect(url_for('profile_setup'))
-        else:
-            flash('Please select a profession', 'error')
+            return redirect(url_for('verification'))
+    
+    professions = []
+    for prof_name, prof_config in PROFESSIONS_CONFIG.items():
+        professions.append({
+            'name': prof_name,
+            'icon_class': prof_config['icon'],
+            'description': f"Professional {prof_name.lower()} with verified skills"
+        })
     
     return render_template('profession.html', professions=professions)
 
-@app.route('/profile-setup', methods=['GET', 'POST'])
-def profile_setup():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+@app.route('/verification', methods=['GET', 'POST'])
+def verification():
+    if not session.get('authenticated') or not session.get('profession'):
+        return redirect(url_for('profession'))
     
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
-    user = cursor.fetchone()
+    profession = session['profession']
+    fields = PROFESSIONS_CONFIG.get(profession, {}).get('fields', [])
     
     if request.method == 'POST':
-        full_name = request.form.get('full_name')
-        address = request.form.get('address')
-        email = request.form.get('email')
-        gender = request.form.get('gender')
+        verification_data = {}
+        for field in fields:
+            field_name = field['name']
+            field_value = request.form.get(field_name)
+            if field['required'] and not field_value:
+                flash(f"Please fill in {field['label']}", 'error')
+                return render_template('verification.html', profession=profession, fields=fields)
+            verification_data[field_name] = field_value
         
-        cursor.execute(
-            """UPDATE users SET full_name = %s, address = %s, email = %s, gender = %s 
-               WHERE id = %s""",
-            (full_name, address, email, gender, session['user_id'])
-        )
-        conn.commit()
-        
-        flash('Profile information saved!', 'success')
+        session['verification_data'] = verification_data
+        return redirect(url_for('profile'))
+    
+    return render_template('verification.html', profession=profession, fields=fields)
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        session['full_name'] = request.form.get('full_name')
+        session['email'] = request.form.get('email')
+        session['gender'] = request.form.get('gender')
+        session['address'] = request.form.get('address')
         return redirect(url_for('id_verification'))
     
-    return render_template('profile.html', user=user)
+    return render_template('profile.html')
 
 @app.route('/id-verification', methods=['GET', 'POST'])
 def id_verification():
-    if 'user_id' not in session:
+    if not session.get('authenticated'):
         return redirect(url_for('login'))
     
     if request.method == 'POST':
         id_type = request.form.get('id_type')
         id_number = request.form.get('id_number')
+        id_file = request.files.get('id_file')
         
-        # Handle file upload
-        if 'id_file' not in request.files:
-            flash('Please upload an ID document', 'error')
-            return render_template('id_verification.html')
-        
-        file = request.files['id_file']
-        if file.filename == '':
-            flash('No file selected', 'error')
-            return render_template('id_verification.html')
-        
-        if file and allowed_file(file.filename):
-            filename = save_uploaded_file(file, session['user_id'], 'id_documents')
+        if id_file and id_type and id_number:
+            filename = save_uploaded_file(id_file, session.get('mobile'), 'id_document')
+            session['id_verified'] = True
+            session['id_data'] = {
+                'type': id_type,
+                'number': id_number,
+                'file': filename
+            }
             
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                """UPDATE users SET id_type = %s, id_number = %s, id_file_path = %s, id_verified = %s 
-                   WHERE id = %s""",
-                (id_type, id_number, filename, True, session['user_id'])
-            )
-            conn.commit()
+
+  
+            user_data = {
+    'mobile': request.form.get('mobile'),
+    'full_name': request.form.get('full_name'),
+    'email': request.form.get('email'),
+    'gender': request.form.get('gender') ,
+    'address': request.form.get('address') ,
+    'profession': request.form.get('profession') ,
+    'verification_data': request.form.get('verification_data'),
+    'id_verified': True,  # set according to your verification result
+    'id_data': request.form.get('id_data'),
+    'language': session.get('language', 'en'),
+    'created_at': datetime.now()
+     }
+
+            app.logger.debug("user_data before DB insert: %s", user_data)
+
+            try:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                params = (
+                user_data['mobile'],
+                user_data['full_name'],
+                user_data['email'],
+                user_data['gender'],
+                user_data['address'],
+                user_data['profession'],
+                json.dumps(user_data.get('verification_data', {})),
+                1 if user_data.get('id_verified') else 0,
+                json.dumps(user_data.get('id_data')) if user_data.get('id_data') else None,
+                user_data.get('language', 'en'),
+                user_data.get('created_at')
+           )
+
+                cursor.execute("""
+                    INSERT INTO users (mobile, full_name, email, gender, address, profession,
+                           verification_data, id_verified, id_data, language, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                    full_name = VALUES(full_name),
+                    email = VALUES(email),
+                    gender = VALUES(gender),
+                    address = VALUES(address),
+                    profession = VALUES(profession),
+                    verification_data = VALUES(verification_data),
+                    id_verified = VALUES(id_verified),
+                    id_data = VALUES(id_data),
+                    updated_at = CURRENT_TIMESTAMP
+                    """, params)
+                conn.commit()
+            except Exception:
+                 app.logger.exception("Failed to save user during ID verification")
+            finally:
+               try: cursor.close()
+               except: pass
+               try: conn.close()
+               except: pass
             
-            flash('ID verification submitted successfully!', 'success')
-            return redirect(url_for('profession_verification'))
+            if save_user_to_db==user_data:
+                return redirect(url_for('stay_signed_in'))
+            else:
+                flash('Error saving your data. Please try again.', 'error')
         else:
-            flash('Invalid file type. Please upload PNG, JPG, or PDF files.', 'error')
+            flash('Please complete all ID verification fields', 'error')
     
     return render_template('id_verification.html')
 
-@app.route('/profession-verification', methods=['GET', 'POST'])
-def profession_verification():
-    if 'user_id' not in session or 'profession' not in session:
-        return redirect(url_for('profession_selection'))
-    
-    profession = session['profession']
-    
-    if request.method == 'GET':
-        fields = generate_profession_fields(profession)
-        session['profession_fields'] = fields
-    else:
-        fields = session.get('profession_fields', [])
-        verification_data = {}
-        
-        for field in fields:
-            field_name = field['name']
-            field_value = request.form.get(field_name)
-            voice_input = request.form.get(f'{field_name}_voice')
-            
-            # Use voice input if available, otherwise text input
-            final_value = voice_input if voice_input else field_value
-            
-            # Enhance text using AI
-            if final_value:
-                enhanced_value = enhance_text(final_value, field['type'], profession)
-                verification_data[field_name] = enhanced_value
-        
-        # Save verification data to database
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE users SET verification_data = %s WHERE id = %s",
-            (json.dumps(verification_data), session['user_id'])
-        )
-        conn.commit()
-        
-        flash('Professional information saved!', 'success')
-        return redirect(url_for('resume_generation'))
-    
-    return render_template('verification.html', fields=fields, profession=profession)
-
-@app.route('/resume-generation', methods=['GET', 'POST'])
-def resume_generation():
-    if 'user_id' not in session:
+@app.route('/stay-signed-in', methods=['GET', 'POST'])
+def stay_signed_in():
+    if not session.get('authenticated'):
         return redirect(url_for('login'))
     
-    # Get user data
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
-    user = cursor.fetchone()
+    if request.method == 'POST':
+        stay_signed = request.form.get('stay_signed')
+        if stay_signed == 'yes':
+            # Set up passkey for future logins
+            session['passkey_setup'] = True
+            flash('Passkey setup completed! You can use it for future logins.', 'success')
+        return redirect(url_for('resume'))
+    
+    return render_template('stay_signed_in.html')
+
+@app.route('/resume', methods=['GET', 'POST'])
+def resume():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
     
     if request.method == 'POST':
         template = request.form.get('template', 'modern')
         
-        # Generate resume
-        resume_file = generate_resume_pdf(user, template)
+        # Generate resume data
+        resume_data = {
+            'id': session.get('mobile'),
+            'full_name': session.get('full_name', ''),
+            'mobile': session.get('mobile', ''),
+            'email': session.get('email', ''),
+            'address': session.get('address', ''),
+            'profession': session.get('profession', ''),
+            'verification_data': session.get('verification_data', {}),
+            'id_verified': session.get('id_verified', False)
+        }
         
-        # Save resume record
-        cursor.execute(
-            "INSERT INTO resumes (user_id, template, file_path) VALUES (%s, %s, %s)",
-            (session['user_id'], template, resume_file)
-        )
-        conn.commit()
+        # Generate PDF resume
+        pdf_path = generate_resume_pdf(resume_data, template)
+        session['resume_path'] = pdf_path
         
-        session['resume_file'] = resume_file
-        flash('Resume generated successfully!', 'success')
-        return redirect(url_for('job_recommendations'))
+        return redirect(url_for('jobs'))
     
     templates = [
         {'id': 'modern', 'name': 'Modern Professional', 'description': 'Clean and contemporary design'},
-        {'id': 'classic', 'name': 'Classic', 'description': 'Traditional professional layout'},
-        {'id': 'compact', 'name': 'Compact', 'description': 'Space-efficient single page'},
-        {'id': 'executive', 'name': 'Executive', 'description': 'Premium detailed format'}
+        {'id': 'classic', 'name': 'Classic Traditional', 'description': 'Traditional formal layout'},
+        {'id': 'compact', 'name': 'Compact One-Page', 'description': 'Single page optimized resume'},
+        {'id': 'executive', 'name': 'Executive Style', 'description': 'Professional executive format'}
     ]
     
-    return render_template('resume.html', templates=templates, user=user)
+    return render_template('resume.html', templates=templates)
 
-@app.route('/job-recommendations')
-def job_recommendations():
-    if 'user_id' not in session:
+@app.route('/jobs')
+def jobs():
+    if not session.get('authenticated'):
         return redirect(url_for('login'))
     
-    # Get user data
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
-    user = cursor.fetchone()
-    
     # Get AI-powered job recommendations
-    jobs = get_job_recommendations(user)
+    profession = session.get('profession', 'Worker')
+    user_data = {
+        'profession': profession,
+        'experience': session.get('verification_data', {}).get('experience_years', 0),
+        'skills': session.get('verification_data', {}).get('skills', ''),
+        'location': session.get('address', '')
+    }
     
-    # Save recommendations to database
-    for job in jobs:
-        cursor.execute(
-            """INSERT INTO job_recommendations 
-               (user_id, job_title, company, location, description, salary_range, match_score, source, apply_url)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            (session['user_id'], job['title'], job['company'], job['location'], 
-             job['description'], job['salary'], job['match_score'], job['source'], job.get('apply_url', '#'))
-        )
-    conn.commit()
+    jobs_data = job_recommender.get_recommendations(user_data)
     
-    return render_template('jobs.html', jobs=jobs, resume_file=session.get('resume_file'))
+    return render_template('jobs.html', jobs=jobs_data)
 
 @app.route('/download-resume')
 def download_resume():
-    resume_file = session.get('resume_file')
-    if resume_file and os.path.exists(resume_file):
-        return send_file(resume_file, as_attachment=True, download_name='My_Professional_Resume.pdf')
-    flash('Resume not found. Please generate a new one.', 'error')
-    return redirect(url_for('resume_generation'))
+    resume_path = session.get('resume_path')
+    if resume_path and os.path.exists(resume_path):
+        return send_file(resume_path, as_attachment=True)
+    else:
+        flash('Resume not found. Please generate your resume first.', 'error')
+        return redirect(url_for('resume'))
 
 @app.route('/voice-input', methods=['POST'])
 def voice_input():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
     try:
         data = request.get_json()
         field_name = data.get('field_name')
-        audio_data = data.get('audio_data')  # Base64 encoded audio
+        text = data.get('text', '')
+        profession = session.get('profession', '')
         
-        # Transcribe audio
-        transcribed_text = transcribe_audio(audio_data)
-        
-        # Enhance text
-        profession = session.get('profession', 'general')
-        enhanced_text = enhance_text(transcribed_text, 'voice_input', profession)
+        # Enhanced text using AI
+        enhanced_text = ai_helper.enhance_text(text, field_name, profession)
         
         return jsonify({
             'success': True,
-            'original_text': transcribed_text,
-            'enhanced_text': enhanced_text
+            'enhanced_text': enhanced_text,
+            'original_text': text
         })
-    
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-@app.route('/chatbot', methods=['POST'])
-def chatbot():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
+@app.route('/speech-to-text', methods=['POST'])
+def speech_to_text():
+    try:
+        audio_data = request.json.get('audio_data')
+        if audio_data:
+            text = transcribe_audio(audio_data)
+            return jsonify({'success': True, 'text': text})
+        return jsonify({'success': False, 'error': 'No audio data'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/translate', methods=['POST'])
+def translate_text():
     try:
         data = request.get_json()
-        message = data.get('message')
-        context = data.get('context', 'general')
+        text = data.get('text', '')
+        target_lang = data.get('target_lang', 'en')
         
-        # Get AI response
-        response = get_chatbot_response(message, context, session)
-        
+        translated_text = translator.translate_text(text, target_lang)
         return jsonify({
             'success': True,
-            'response': response
+            'translated_text': translated_text,
+            'original_text': text
         })
-    
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/track-job', methods=['POST'])
+def track_job():
+    try:
+        data = request.get_json()
+        job_id = data.get('job_id')
+        action = data.get('action')  # applied, saved, viewed
+        
+        # Store job tracking in database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO job_tracking (user_mobile, job_id, action, created_at)
+            VALUES (%s, %s, %s, %s)
+        ''', (session.get('mobile'), job_id, action, datetime.now()))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('You have been logged out successfully.', 'info')
+    flash('You have been logged out successfully.', 'success')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    # Initialize database on first run
-    from database.init_db import init_database
-    init_database()
-    
     app.run(debug=True, host='0.0.0.0', port=5000)
