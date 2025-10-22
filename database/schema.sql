@@ -4,8 +4,8 @@
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     mobile VARCHAR(15) UNIQUE NOT NULL,
-    full_name VARCHAR(100),
-    email VARCHAR(100),
+    full_name VARCHAR(20),
+    email VARCHAR(30),
     gender VARCHAR(20),
     address TEXT,
     profession VARCHAR(100),

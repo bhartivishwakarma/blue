@@ -9,10 +9,10 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'bluecollar-resume-secret-key-2024')
     
     # Database Configuration
-    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
-    MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'password')
-    MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'bluecollar_resume')
+    MYSQL_HOST = 'localhost'
+    MYSQL_USER = 'root'
+    MYSQL_PASSWORD = 'Demo@100'
+    MYSQL_DATABASE = 'bluecollar'
     
     # File Upload Configuration
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')

@@ -19,7 +19,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 
-
+# COMPLETE profession configuration with ALL professions
 PROFESSIONS_CONFIG = {
     "Driver": {
         "icon": "fas fa-truck",
@@ -143,7 +143,7 @@ PROFESSIONS_CONFIG = {
     }
 }
 
-
+# Initialize helpers
 ai_helper = AIHelper()
 job_recommender = JobRecommender()
 auth_helper = Auth()
@@ -153,7 +153,8 @@ def get_db_connection():
         host=Config.MYSQL_HOST,
         user=Config.MYSQL_USER,
         password=Config.MYSQL_PASSWORD,
-        database=Config.MYSQL_DATABASE
+        database=Config.MYSQL_DATABASE,
+        auth_plugin='mysql_native_password',
     )
 
 def save_user_to_db(user_data):
@@ -161,12 +162,13 @@ def save_user_to_db(user_data):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+        created_at=user_data.get('created_at') or datetime.now()
         cursor.execute('''
             INSERT INTO users (mobile, full_name, email, gender, address, profession, 
                              verification_data, id_verified, id_data, language, created_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
+            mobile=VALUES(mobile),
             full_name = VALUES(full_name),
             email = VALUES(email),
             gender = VALUES(gender),
@@ -175,18 +177,20 @@ def save_user_to_db(user_data):
             verification_data = VALUES(verification_data),
             id_verified = VALUES(id_verified),
             id_data = VALUES(id_data),
+            language=VALUES(language),
             updated_at = CURRENT_TIMESTAMP
-        ''', (
-            user_data['mobile'],
-            user_data['full_name'],
-            user_data['email'],
-            user_data['gender'],
-            user_data['address'],
-            user_data['profession'],
-            json.dumps(user_data['verification_data']),
-            user_data['id_verified'],
-            json.dumps(user_data['id_data']) if user_data['id_data'] else None,
-            user_data['language']
+               ''', (
+            user_data.get('mobile'),
+            user_data.get('full_name', ''),
+            user_data.get('email', ''),
+            user_data.get('gender', ''),              # safe access
+            user_data.get('address', ''),
+            user_data.get('profession', ''),
+            json.dumps(user_data.get('verification_data', {})),
+            1 if user_data.get('id_verified') else 0, # ensure int for DB
+            json.dumps(user_data.get('id_data')) if user_data.get('id_data') else None,
+            user_data.get('language', 'en'),
+            created_at
         ))
         
         conn.commit()
@@ -392,67 +396,25 @@ def id_verification():
                 'number': id_number,
                 'file': filename
             }
-            
 
-  
+            # Prepare user data for saving
             user_data = {
-    'mobile': request.form.get('mobile'),
-    'full_name': request.form.get('full_name'),
-    'email': request.form.get('email'),
-    'gender': request.form.get('gender') ,
-    'address': request.form.get('address') ,
-    'profession': request.form.get('profession') ,
-    'verification_data': request.form.get('verification_data'),
-    'id_verified': True,  # set according to your verification result
-    'id_data': request.form.get('id_data'),
-    'language': session.get('language', 'en'),
-    'created_at': datetime.now()
-     }
+                'mobile': session.get('mobile'),
+                'full_name': session.get('full_name', ''),
+                'email': session.get('email', ''),
+                'gender ': session.get('gender', ''),
+                'address': session.get('address', ''),
+                'profession': session.get('profession', ''),
+                'verification_data': session.get('verification_data'),
+                'id_verified': session.get('id_verified', True),
+                'id_data': session.get('id_data', {}),
+                
+                'created_at' :session.get('created_at', datetime.now().isoformat()),
+                'language': session.get('language', 'en') ,
+            }
 
-            app.logger.debug("user_data before DB insert: %s", user_data)
-
-            try:
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                params = (
-                user_data['mobile'],
-                user_data['full_name'],
-                user_data['email'],
-                user_data['gender'],
-                user_data['address'],
-                user_data['profession'],
-                json.dumps(user_data.get('verification_data', {})),
-                1 if user_data.get('id_verified') else 0,
-                json.dumps(user_data.get('id_data')) if user_data.get('id_data') else None,
-                user_data.get('language', 'en'),
-                user_data.get('created_at')
-           )
-
-                cursor.execute("""
-                    INSERT INTO users (mobile, full_name, email, gender, address, profession,
-                           verification_data, id_verified, id_data, language, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE
-                    full_name = VALUES(full_name),
-                    email = VALUES(email),
-                    gender = VALUES(gender),
-                    address = VALUES(address),
-                    profession = VALUES(profession),
-                    verification_data = VALUES(verification_data),
-                    id_verified = VALUES(id_verified),
-                    id_data = VALUES(id_data),
-                    updated_at = CURRENT_TIMESTAMP
-                    """, params)
-                conn.commit()
-            except Exception:
-                 app.logger.exception("Failed to save user during ID verification")
-            finally:
-               try: cursor.close()
-               except: pass
-               try: conn.close()
-               except: pass
             
-            if save_user_to_db==user_data:
+            if save_user_to_db(user_data):
                 return redirect(url_for('stay_signed_in'))
             else:
                 flash('Error saving your data. Please try again.', 'error')
