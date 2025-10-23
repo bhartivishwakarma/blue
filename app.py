@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
-app.register_blueprint(assistant_bp,url_prefix='/assistant')
+app.register_blueprint(assistant_bp)
 
 # COMPLETE profession configuration with ALL professions
 PROFESSIONS_CONFIG = {

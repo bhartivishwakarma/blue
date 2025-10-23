@@ -17,6 +17,181 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+    <!-- Assistant Styles -->
+    <style>
+        /* Assistant Styles */
+        .assistant-wrapper {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .assistant-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .assistant-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        .assistant-chatbox {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 380px;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .assistant-header {
+            background: #007BFF;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .assistant-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .assistant-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .assistant-message-container {
+            display: flex;
+            width: 100%;
+        }
+
+        .assistant-message {
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background: #007BFF;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message {
+            background: #f1f3f4;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .assistant-loading {
+            display: none;
+            padding: 1rem;
+            text-align: center;
+            color: #6c757d;
+            background: #f8f9fa;
+        }
+
+        .assistant-input-area {
+            padding: 1rem;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            background: white;
+        }
+
+        .assistant-lang-select {
+            padding: 0.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.875rem;
+        }
+
+        .assistant-text-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .assistant-icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .assistant-icon-btn:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .assistant-icon-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .assistant-chatbox {
+                width: calc(100vw - 40px);
+                right: 20px;
+                left: 20px;
+                bottom: 80px;
+            }
+            
+            .assistant-wrapper {
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -83,15 +258,226 @@
                     <a href="#">Contact Support</a>
                 </div>
             </div>
-        </foot>
-                      
-         
-        
+        </footer>
+    </div>
+
+    <!-- Blue Collar Assistant Chat Widget -->
+    <div class="assistant-wrapper">
+        <button id="assistantButton" class="assistant-button" title="Open Assistant" aria-label="Open AI Assistant">
+            <i class="fas fa-robot"></i>
+        </button>
+
+        <div id="chatbox" class="assistant-chatbox" role="dialog" aria-label="Blue Collar Assistant">
+            <div class="assistant-header">
+                <i class="fas fa-robot"></i>
+                <span>Blue Collar Assistant</span>
+                <button class="assistant-close" id="closeAssistant">×</button>
+            </div>
+
+            <div id="messages" class="assistant-messages" aria-live="polite"></div>
+            
+            <div id="loading" class="assistant-loading">
+                <i class="fas fa-circle-notch fa-spin"></i> Assistant is thinking...
+            </div>
+
+            <div class="assistant-input-area">
+                <select id="langSelect" class="assistant-lang-select" aria-label="Language">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ta">Tamil</option>
+                    <option value="te">Telugu</option>
+                    <option value="bn">Bengali</option>
+                    <option value="mr">Marathi</option>
+                </select>
+
+                <input id="textInput" class="assistant-text-input" placeholder="Ask about resumes, jobs, or skills..." aria-label="Type message" />
+
+                <button id="micBtn" class="assistant-icon-btn" title="Speak" aria-label="Voice input">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button id="sendBtn" class="assistant-icon-btn" title="Send" aria-label="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/voice-input.js') }}"></script>
     <script src="{{ url_for('static', filename='js/job-tracker.js') }}"></script>
+    
+    <!-- Assistant JavaScript -->
+    <script>
+    const ASSISTANT_API = "{{ url_for('assistant.chat') }}";
+    const assistantButton = document.getElementById('assistantButton');
+    const chatbox = document.getElementById('chatbox');
+    const messages = document.getElementById('messages');
+    const loading = document.getElementById('loading');
+    const textInput = document.getElementById('textInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+    const langSelect = document.getElementById('langSelect');
+    const closeAssistant = document.getElementById('closeAssistant');
+
+    let welcomed = false;
+    let recognition = null;
+
+    // Initialize assistant
+    function initAssistant() {
+        setupRecognition();
+        setupEventListeners();
+    }
+
+    function setupEventListeners() {
+        assistantButton.addEventListener('click', toggleAssistant);
+        closeAssistant.addEventListener('click', () => chatbox.style.display = 'none');
+        sendBtn.addEventListener('click', sendText);
+        textInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendText();
+        });
+        
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (chatbox.style.display === 'flex' && 
+                !chatbox.contains(e.target) && 
+                !assistantButton.contains(e.target)) {
+                chatbox.style.display = 'none';
+            }
+        });
+    }
+
+    function toggleAssistant() {
+        const isVisible = chatbox.style.display === 'flex';
+        chatbox.style.display = isVisible ? 'none' : 'flex';
+        
+        if (!isVisible) {
+            textInput.focus();
+            if (!welcomed) {
+                welcomeUser();
+                welcomed = true;
+            }
+        }
+    }
+
+    function welcomeUser() {
+        const welcomeMessages = {
+            'en': "Hello! I'm your Blue Collar Assistant. I can help you with resume building, job search advice, and skill development. How can I assist you today?",
+            'hi': "नमस्ते! मैं आपका ब्लू कॉलर असिस्टेंट हूं। मैं आपकी रिज्यूमे बनाने, नौकरी खोजने और स्किल डेवलपमेंट में मदद कर सकता हूं। आज मैं आपकी क्या मदद कर सकता हूं?",
+            'ta': "வணக்கம்! நான் உங்கள் ப்ளூ காலர் உதவியாளன். விண்ணப்பப்படிவம் தயாரித்தல், வேலை தேடுதல் ஆலோசனை மற்றும் திறன் மேம்பாடு ஆகியவற்றில் நான் உங்களுக்கு உதவ முடியும். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
+            'te': "హలో! నేను మీ బ్లూ కాలర్ అసిస్టెంట్. రెస్యూమ్ బిల్డింగ్, జాబ్ సెర్చ్ అడ్వైస్ మరియు స్కిల్ డెవలప్మెంట్లో నేను మీకు సహాయం చేయగలను. ఈరోజు నేను మీకు ఎలా సహాయం చేయగలను?",
+            'bn': "হ্যালো! আমি আপনার ব্লু কলার অ্যাসিস্টেন্ট। রিজিউমি তৈরি, চাকরি খোঁজার পরামর্শ এবং দক্ষতা উন্নয়নে আমি আপনাকে সাহায্য করতে পারি। আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+            'mr': "नमस्कार! मी तुमचा ब्लू कॉलर असिस्टंट आहे. रेझ्युमे तयार करणे, नोकरी शोधण्याचा सल्ला आणि कौशल्य विकासात मी तुम्हाला मदत करू शकतो. आज मी तुम्हाला कशी मदत करू शकतो?"
+        };
+        
+        const lang = langSelect.value;
+        addMessage('bot', welcomeMessages[lang] || welcomeMessages['en']);
+    }
+
+    function addMessage(sender, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `assistant-message ${sender}-message`;
+        messageDiv.textContent = text;
+        
+        const container = document.createElement('div');
+        container.className = 'assistant-message-container';
+        container.style.justifyContent = sender === 'user' ? 'flex-end' : 'flex-start';
+        container.appendChild(messageDiv);
+        
+        messages.appendChild(container);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function sendText() {
+        const text = textInput.value.trim();
+        const lang = langSelect.value;
+        
+        if (!text) return;
+        
+        addMessage('user', text);
+        textInput.value = '';
+        loading.style.display = 'block';
+        sendBtn.disabled = true;
+
+        try {
+            const response = await fetch(ASSISTANT_API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ text, lang })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                addMessage('bot', `⚠️ ${data.error}`);
+            } else {
+                addMessage('bot', data.reply);
+                
+                // Play audio if available
+                if (data.audio_base64) {
+                    try {
+                        const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
+                        await audio.play();
+                    } catch (audioError) {
+                        console.log('Audio playback not available');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Assistant error:', error);
+            addMessage('bot', '⚠️ Sorry, I encountered an error. Please try again.');
+        } finally {
+            loading.style.display = 'none';
+            sendBtn.disabled = false;
+        }
+    }
+
+    function setupRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            micBtn.style.display = 'none';
+            return;
+        }
+        
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            textInput.value = transcript;
+            sendText();
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
+        
+        recognition.onend = () => {
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
+    }
+
+    micBtn.addEventListener('click', () => {
+        if (!recognition) return;
+        
+        const lang = langSelect.value;
+        recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+        
+        try {
+            recognition.start();
+            micBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        } catch (error) {
+            console.warn('Speech recognition error:', error);
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        }
+    });
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initAssistant);
+    </script>
     
     <!-- Service Worker Registration -->
     <script>

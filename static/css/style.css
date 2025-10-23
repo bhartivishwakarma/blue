@@ -546,108 +546,22 @@ body {
     }
 }
 
-/* Chatbot Styles */
-.chatbot-wrapper {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 1000;
-}
 
-.chatbot-icon {
-    background: linear-gradient(135deg, var(--primary-blue), var(--blue-dark));
-    color: var(--white);
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: var(--box-shadow-lg);
-    transition: var(--transition);
-    font-size: 1.8rem;
-    position: relative;
-}
 
-.chatbot-icon::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg, var(--primary-blue), var(--blue-dark));
-    border-radius: 50%;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s;
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .assistant-chatbox {
+        width: calc(100vw - 40px);
+        right: 20px;
+        left: 20px;
+        bottom: 80px;
+    }
+    
+    .assistant-wrapper {
+        bottom: 10px;
+        right: 10px;
+    }
 }
-
-.chatbot-icon:hover::after {
-    opacity: 1;
-}
-
-.chatbot-icon:hover {
-    transform: scale(1.1) rotate(10deg);
-}
-
-.chatbot-window {
-    position: absolute;
-    bottom: 85px;
-    right: 0;
-    width: 380px;
-    height: 550px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    box-shadow: var(--box-shadow-lg);
-    display: none;
-    flex-direction: column;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    overflow: hidden;
-}
-
-.chatbot-header {
-    background: linear-gradient(135deg, var(--primary-blue), var(--blue-dark));
-    color: var(--white);
-    padding: 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chatbot-close {
-    background: none;
-    border: none;
-    color: var(--white);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.chatbot-close:hover {
-    transform: scale(1.1);
-}
-
-.chatbot-messages {
-    flex: 1;
-    padding: 1.25rem;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.chatbot-message {
-    padding: 0.875rem 1rem;
-    border-radius: 18px;
-    max-width: 85%;
-    word-wrap: break-word;
-    animation: messageSlide 0.3s ease-out;
-    position: relative;
-}
-
 @keyframes messageSlide {
     from {
         opacity: 0;
