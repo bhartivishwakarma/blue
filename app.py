@@ -1,5 +1,5 @@
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
+from flask import Flask,render_template, request, redirect, url_for, session, flash, send_file, jsonify
 import mysql.connector
 from config import Config
 from services.file_upload import save_uploaded_file
@@ -10,6 +10,8 @@ from utils.speech_recognition import transcribe_audio
 from utils.ai_helper import AIHelper
 from utils.job_recommender import JobRecommender
 from utils.auth import Auth
+from services.assistant_service import assistant_bp     
+
 import json
 import random
 import os
@@ -18,6 +20,7 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
+app.register_blueprint(assistant_bp,url_prefix='/assistant')
 
 # COMPLETE profession configuration with ALL professions
 PROFESSIONS_CONFIG = {
@@ -219,28 +222,26 @@ def get_user_from_db(mobile):
 
 @app.route('/')
 def index():
-    return redirect(url_for('language'))
+    return redirect(url_for('language') )
 
 @app.route('/language', methods=['GET', 'POST'])
 def language():
-    if request.method == 'POST':
-        session['language'] = request.form.get('language', 'en')
-        return redirect(url_for('login'))
-    
     languages = [
         {'code': 'en', 'name': 'English'},
         {'code': 'hi', 'name': 'हिन्दी'},
+        {'code': 'od', 'name': 'ଓଡ଼ିଆ'},
         {'code': 'ta', 'name': 'தமிழ்'},
         {'code': 'te', 'name': 'తెలుగు'},
-        {'code': 'bn', 'name': 'বাংলা'},
-        {'code': 'mr', 'name': 'मराठी'},
-        {'code': 'gu', 'name': 'ગુજરાતી'},
-        {'code': 'kn', 'name': 'ಕನ್ನಡ'},
-        {'code': 'ml', 'name': 'മലയാളം'},
-        {'code': 'pa', 'name': 'ਪੰਜਾਬੀ'}
+        {'code': 'bn', 'name': 'বাংলা'}
     ]
-    
-    selected_language = session.get('language', 'en')
+    selected_language=session.get('language','en')
+    if request.method == 'POST':
+        lang=request.form.get('language')
+        if lang:
+           session['language']=lang
+
+           return redirect(url_for('login'))
+
     return render_template('language.html', languages=languages, selected_language=selected_language)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -499,6 +500,7 @@ def download_resume():
     else:
         flash('Resume not found. Please generate your resume first.', 'error')
         return redirect(url_for('resume'))
+
 
 @app.route('/voice-input', methods=['POST'])
 def voice_input():

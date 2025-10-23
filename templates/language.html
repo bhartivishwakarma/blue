@@ -19,14 +19,10 @@
                     <div class="language-flag">
                         {% if language.code == 'en' %}🇺🇸
                         {% elif language.code == 'hi' %}🇮🇳
+                        {% elif language.code == 'od' %}🇮🇳
                         {% elif language.code == 'ta' %}🇮🇳
                         {% elif language.code == 'te' %}🇮🇳
                         {% elif language.code == 'bn' %}🇮🇳
-                        {% elif language.code == 'mr' %}🇮🇳
-                        {% elif language.code == 'gu' %}🇮🇳
-                        {% elif language.code == 'kn' %}🇮🇳
-                        {% elif language.code == 'ml' %}🇮🇳
-                        {% elif language.code == 'pa' %}🇮🇳
                         {% else %}🌐{% endif %}
                     </div>
                     <div class="language-name">{{ language.name }}</div>
@@ -104,6 +100,7 @@
 }
 
 .language-card:hover {
+    background-color: var(--black-lightest);
     border-color: var(--primary-blue);
     transform: translateY(-5px);
     box-shadow: var(--box-shadow);
