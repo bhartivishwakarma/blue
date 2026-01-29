@@ -11,7 +11,7 @@ class Config:
     # Database Configuration
     MYSQL_HOST = 'localhost'
     MYSQL_USER = 'root'
-    MYSQL_PASSWORD = 'Demo@100'
+    MYSQL_PASSWORD = '------'
     MYSQL_DATABASE = 'bluecollar'
     
     # File Upload Configuration
